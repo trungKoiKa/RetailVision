@@ -3,7 +3,7 @@
 > **Trạng thái:** Dự thảo phục vụ triển khai và bảo vệ đồ án  
 > **Phiên bản:** 0.1 — 29/09/2026  
 > **Phạm vi:** một điểm bán hoặc mô hình thử; một camera cố định quan sát một cửa và một vùng chờ thanh toán  
-> **Tài liệu kỹ thuật đi kèm:** `RetailVision_Ke_Hoach_Spring_React_PostgreSQL.md`  
+> **Tài liệu kỹ thuật đi kèm:** `RetailVision_Ke_Hoach.md`
 > **Cơ sở bố cục:** PRD EDUA Physics do người dùng cung cấp; nội dung yêu cầu sản phẩm dưới đây được viết riêng cho RetailVision.
 
 ## 1. Kiểm soát tài liệu
@@ -223,7 +223,8 @@ Thành công về lợi ích vận hành (ví dụ giảm chờ) cần đánh gi
 
 ## 16. Tài liệu tham khảo
 
-- [Kế hoạch triển khai RetailVision cùng phiên bản kiến trúc](./RetailVision_Ke_Hoach_Spring_React_PostgreSQL.md).
+- [Kế hoạch triển khai RetailVision cùng phiên bản kiến trúc](./RetailVision_Ke_Hoach.md).
+- [Kế hoạch khởi tạo mã nguồn theo từng giai đoạn](./KE_HOACH_KHOI_TAO.md).
 - PRD `EDUA-Physics-PRD-Tieng-Viet.md` do người dùng cung cấp: tham khảo cấu trúc và cách đặt ID/tiêu chí nghiệm thu; không dùng nội dung nghiệp vụ giáo dục cho RetailVision.
 - [YOLO Watchdog, commit 21b4d0a](https://github.com/kysutrung/yolo_watchdog/tree/21b4d0a78e358bbcb19fc854b5ab6fed5bea0e1f): tham khảo luồng phát hiện và thiết bị cảnh báo.
 - Tài liệu công nghệ liên kết trong phần tài liệu tham khảo của kế hoạch triển khai.

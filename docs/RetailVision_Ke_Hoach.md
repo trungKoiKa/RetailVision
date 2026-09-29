@@ -127,7 +127,7 @@
 #### 3.1. Môi trường phát triển và tổ chức mã nguồn
 
 - **3.1.1.** Môi trường Windows, Raspberry Pi OS và công cụ phát triển.
-- **3.1.2.** Cấu trúc thư mục RetailVision-IoT và trách nhiệm các module.
+- **3.1.2.** Cấu trúc thư mục RetailVision và trách nhiệm các module.
 - **3.1.3.** Quản lý phiên bản thư viện, model, cấu hình và mã nguồn tham khảo.
 
 #### 3.2. Lắp đặt phần cứng và hiệu chuẩn camera

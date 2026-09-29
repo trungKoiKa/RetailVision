@@ -334,11 +334,13 @@ Lưu `docs/camera-calibration.md`: ngày lắp, ảnh/sơ đồ, chiều cao và
 Các lệnh dưới đây chỉ phục vụ Python edge, không cài Spring Boot hoặc React bằng pip:
 
 ```powershell
-Set-Location "D:\DoAn\RetailVision-IoT"
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install opencv-python numpy ultralytics paho-mqtt pyyaml python-dotenv
-.\.venv\Scripts\python.exe -m pip check
+Set-Location "D:\DoAnHeThongNhungIoT-Ky9\RetailVision"
+python -m venv edge/.venv
+.\edge\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\edge\.venv\Scripts\python.exe -m pip install -r edge/requirements.txt
+.\edge\.venv\Scripts\python.exe -m pip check
+Set-Location edge
+.\.venv\Scripts\python.exe -m retailvision.main --config ../configs/examples/site01-demo.yaml --check-config
 ```
 
 Tạo ứng dụng Spring Boot riêng trong `backend/` và dự án Vite React TypeScript ở `frontend/`; JDK/Node phải kiểm phiên bản tương thích tại thời điểm cài. PostgreSQL chạy trên máy chủ LAN, schema thay đổi qua Flyway. Có thể dùng Docker Compose cho `backend + postgres + frontend` trên cùng máy chủ nếu nhóm quen Docker; broker Pi dùng dịch vụ hệ thống theo mục 24.6.
@@ -355,12 +357,12 @@ Arduino IDE nạp sketch `firmware/retail_alert/`, dùng PubSubClient và Arduin
 
 ### 8.1 Một repo, ba tiến trình vận hành
 
-Tạo `D:\DoAn\RetailVision-IoT` để phát triển; Pi nhận `edge/` và cấu hình/triển khai của Pi, còn máy chủ nhận `backend/`, `frontend/` và phần triển khai của máy chủ. Không chuyển môi trường Python Windows sang Pi. Các đường dẫn trong cây là mục tiêu cần xây dựng, không phải mã đã có sẵn.
+Phát triển trực tiếp trong repository `RetailVision`; Pi nhận `edge/`, `configs/`, `models/`, `contracts/` và phần triển khai của Pi, còn máy chủ nhận `backend/`, `frontend/`, `contracts/` và phần triển khai của máy chủ. Không chuyển môi trường Python Windows sang Pi. Cây dưới đây là cấu trúc chuẩn của repository; module nào chưa hiện thực phải giữ README hoặc skeleton mô tả trách nhiệm, không tạo hàng loạt file rỗng khó kiểm soát.
 
 ### 8.2 Cây thư mục
 
 ```text
-RetailVision-IoT/
+RetailVision/
 ├── edge/                              # Python chạy trên Pi 4
 │   ├── retailvision/
 │   │   ├── __init__.py
@@ -378,7 +380,10 @@ RetailVision-IoT/
 │   │   └── config.py
 │   ├── experiments/                   # detect, track, zone, MQTT giả
 │   ├── tests/                         # hình học, crossing, timer, trùng event
-│   └── requirements.pi.lock.txt
+│   ├── requirements.txt
+│   ├── requirements-dev.txt
+│   ├── requirements.pi.lock.txt
+│   └── README.md
 ├── backend/                           # Java 21 / Spring Boot trên máy chủ LAN
 │   ├── pom.xml                        # Maven; cố định phiên bản sau khi chọn
 │   └── src/
@@ -401,18 +406,21 @@ RetailVision-IoT/
 │   │   └── main.tsx
 │   └── public/
 ├── firmware/retail_alert/             # Arduino ESP32: LED/nút/MQTT/timeout
-├── configs/                            # site01.yaml, site01-demo.yaml, site01-pi.yaml
-├── models/                             # Trọng số; không commit file lớn
-├── ai-model/                           # Export NCNN; fine-tune nếu có dữ liệu
+├── contracts/                          # JSON Schema MQTT và OpenAPI dùng chung
+│   ├── mqtt/
+│   └── openapi.yaml
+├── configs/
+│   └── examples/                       # site01-demo.yaml, site01-pi.yaml
+├── models/
+│   ├── source/                         # Trọng số nguồn như .pt
+│   └── exported/                       # NCNN theo model và input size
 ├── data/                               # Video/ảnh nghiên cứu được phép dùng
-├── evaluation/                         # ground_truth, benchmark, results
-├── infra/
-│   ├── compose.server.yaml            # Tùy chọn: postgres, backend, frontend
-│   └── postgres/README.md             # Backup/restore, đường dẫn volume
+├── evaluation/                         # ground_truth, benchmarks, results
+├── tests/                              # integration và fixture liên thành phần
 ├── deploy/
-│   ├── pi/retail-edge.service          # Entrypoint edge riêng: cd edge
+│   ├── pi/systemd/retail-edge.service
 │   ├── pi/mosquitto/retail.conf
-│   └── server/README.md                # Cài Spring/Postgres/React máy chủ
+│   └── server/                         # Compose/Dockerfile/hướng dẫn máy chủ
 ├── docs/
 │   ├── architecture.md
 │   ├── mqtt-topics.md                  # Topic, payload, app ACK, timeout
@@ -420,14 +428,15 @@ RetailVision-IoT/
 │   ├── data-schema.md                  # PostgreSQL, idempotency, giờ/ngày
 │   ├── hardware-setup.md
 │   ├── deployment-pi4.md
-│   └── report/
+│   ├── report/
+│   └── KE_HOACH_KHOI_TAO.md
 ├── references/yolo_watchdog/           # URL/commit, reuse-map, giấy phép
 ├── .env.example
 ├── .gitignore
 └── README.md
 ```
 
-Giữ `models`, `data`, `evaluation` từ kế hoạch trước. File `.env`, thư mục dữ liệu gốc, spool runtime và model nặng không commit. `event_spool.py` chỉ lưu metadata chưa xác nhận với giới hạn rõ ràng; nếu đầy, báo mất coverage thay vì xóa im lặng. React không mở camera hoặc kết nối trực tiếp PostgreSQL. Backend là bên ghi database; Pi publish và đồng bộ lại bằng event ID/sequence. Nếu dashboard cần ảnh demo thì dùng preview của Pi có kiểm soát, không ghi video vào DB.
+Giữ `models`, `data`, `evaluation` từ kế hoạch trước nhưng không dùng thêm `ai-model/`: trọng số nguồn đặt dưới `models/source/`, bản export đặt dưới `models/exported/<model>-<backend>-<imgsz>/`. File `.env`, thư mục dữ liệu gốc, spool runtime và model nặng không commit. `event_spool.py` chỉ lưu metadata chưa xác nhận với giới hạn rõ ràng; nếu đầy, báo mất coverage thay vì xóa im lặng. React không mở camera hoặc kết nối trực tiếp PostgreSQL. Backend là bên ghi database; Pi publish và đồng bộ lại bằng event ID/sequence. Nếu dashboard cần ảnh demo thì dùng preview của Pi có kiểm soát, không ghi video vào DB.
 
 ### 8.3 Phần tham khảo từ YOLO Watchdog
 
@@ -437,7 +446,7 @@ Giữ `models`, `data`, `evaluation` từ kế hoạch trước. File `.env`, th
 | `src/desktop_app/main_beta_app.py`                      | `edge/retailvision/geometry.py`, `overlay.py`                                | Học chia vùng/vẽ; sửa mốc 640×480 và ranh giới; bỏ GUI CUDA                  |
 | `src/image_processor/tools_check_yolo/fps_test_tool.py` | `evaluation/benchmark.py`                                                    | Học cách đo FPS, thêm đo toàn luồng và độ đúng                               |
 | `src/alert_receiver/custom_remote_monitor/...`          | `firmware/retail_alert/`                                                     | Học thiết bị nhận; viết lại LED/nút/MQTT/ACK thay ESP-NOW                    |
-| Repo không có hệ thống bán lẻ tương ứng                 | `edge/counting.py`, `queue_monitor.py`, `alerts.py`; `backend/`; `frontend/` | Tự xây dựng và đánh giá                                                      |
+| Repo không có hệ thống bán lẻ tương ứng                 | `edge/retailvision/counting.py`, `queue_monitor.py`, `alerts.py`; `backend/`; `frontend/` | Tự xây dựng và đánh giá                                                      |
 
 Ghi nguồn/commit trong `references/yolo_watchdog/reuse-map.md` và giấy phép phù hợp khi dùng lại mã. Không mặc định model custom trong repo là lớp person, không lấy xoay camera theo người để làm tracking đếm khách.
 
@@ -453,14 +462,12 @@ Ghi nguồn/commit trong `references/yolo_watchdog/reuse-map.md` và giấy phé
 ### 8.5 Tạo thư mục khởi đầu trên Windows
 
 ```powershell
-New-Item -ItemType Directory -Path "D:\DoAn\RetailVision-IoT" -Force | Out-Null
-Set-Location "D:\DoAn\RetailVision-IoT"
-@("edge/retailvision", "edge/experiments", "edge/tests", "backend", "frontend", "firmware/retail_alert", "configs", "models", "data/raw", "evaluation/ground_truth", "infra/postgres", "deploy/pi/mosquitto", "deploy/server", "docs/report", "references/yolo_watchdog") | ForEach-Object { New-Item -ItemType Directory -Path $_ -Force | Out-Null }
-New-Item -ItemType File -Path "edge/retailvision/__init__.py" -Force | Out-Null
+Set-Location "D:\DoAnHeThongNhungIoT-Ky9\RetailVision"
+@("edge/retailvision", "edge/experiments", "edge/tests", "backend", "frontend", "firmware/retail_alert", "contracts/mqtt", "configs/examples", "models/source", "models/exported", "data/raw", "evaluation/ground_truth", "evaluation/benchmarks", "evaluation/results", "tests/integration", "tests/fixtures", "deploy/pi/systemd", "deploy/pi/mosquitto", "deploy/server", "docs/report", "references/yolo_watchdog") | ForEach-Object { New-Item -ItemType Directory -Path $_ -Force | Out-Null }
 python -m venv edge/.venv
 ```
 
-Cây Java/React sẽ do trình khởi tạo Spring Boot và Vite sinh ra lúc bắt đầu từng phần. Không tạo file rỗng hàng loạt. Giữ clone YOLO Watchdog ở thư mục riêng để tham khảo; app không phụ thuộc vào clone khi vận hành.
+Cây Java/React được sinh hoặc cập nhật khi bắt đầu từng phần. Không tạo file rỗng hàng loạt. Giữ clone YOLO Watchdog ngoài repository để tham khảo; `references/yolo_watchdog/` chỉ lưu URL, commit, giấy phép và reuse map. App không phụ thuộc vào clone khi vận hành. Kế hoạch và điều kiện hoàn thành từng giai đoạn nằm trong `docs/KE_HOACH_KHOI_TAO.md`.
 
 ### 8.6 Git và bí mật
 
@@ -498,7 +505,7 @@ Mật khẩu broker, PostgreSQL và bí mật phiên xác thực để ngoài re
 
 ### 9.1 File cấu hình mẫu
 
-Đây là giao diện cấu hình đề xuất; cần viết `config.py` để đọc và kiểm tra. Tọa độ 0–1 được đổi sang pixel bằng kích thước frame thực tế. Ví dụ chỉ minh họa hình học; phải chọn lại tại nơi lắp.
+Giao diện cấu hình đang được khởi tạo tại `configs/examples/`. `config.py` phải đọc, kiểm tra và phân giải mọi đường dẫn tương đối từ thư mục chứa file YAML, không phụ thuộc shell đang đứng ở đâu. Tọa độ 0–1 được đổi sang pixel bằng kích thước frame thực tế. Ví dụ chỉ minh họa hình học; phải chọn lại tại nơi lắp.
 
 ```yaml
 site_id: site01
@@ -509,7 +516,7 @@ camera:
   requested_width: 1280
   requested_height: 720
 model:
-  weights: ../models/yolov8n.pt  # ví dụ khi chạy từ edge/; config.py phải chuẩn hóa đường dẫn
+  weights: ../../models/source/yolov8n.pt  # tính từ configs/examples/
   image_size: 640
   confidence: 0.35
   person_class_id: 0
@@ -537,7 +544,7 @@ mqtt:
   root: retail/site01/cam01
   heartbeat_seconds: 1
 spool:
-  path: edge/runtime/spool/
+  path: ../../edge/runtime/spool/  # tính từ configs/examples/
   max_bytes: 104857600  # mục tiêu ban đầu 100 MiB; kiểm thử overflow
   sample_seconds: 1  # telemetry mẫu có thể gộp; crossing/event/ack không được bỏ im lặng
 ```
@@ -984,14 +991,16 @@ Kiểm tra `uname -m` là `aarch64`. Sau reboot đăng nhập lại. Ghi lại t
 Chỉ chuyển code, config mẫu và model; không chuyển `.venv`, mật khẩu thật, cache hay DB đang mở. Có thể dùng Git repository của mình hoặc SCP. Trên Pi đồng bộ dự án đầy đủ rồi tạo môi trường cho edge:
 
 ```bash
-mkdir -p /home/rv/RetailVision-IoT
-cd /home/rv/RetailVision-IoT
-mkdir -p edge/runtime/spool models configs
+mkdir -p /home/rv/RetailVision
+cd /home/rv/RetailVision
+mkdir -p edge/runtime/spool models/source models/exported
+python3 -m venv edge/.venv
+edge/.venv/bin/python -m pip install --upgrade pip
+edge/.venv/bin/python -m pip install -r edge/requirements.txt
+edge/.venv/bin/python -m pip check
 cd edge
-python3 -m venv .venv
-.venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install ultralytics opencv-python numpy paho-mqtt pyyaml python-dotenv
-.venv/bin/python -m pip check
+.venv/bin/python -m retailvision.main --config ../configs/examples/site01-pi.yaml --check-config
+cd ..
 v4l2-ctl --list-devices
 ```
 
@@ -1000,7 +1009,7 @@ Lệnh cài là điểm bắt đầu cho profile CPU. Nếu thiếu wheel tươn
 Chạy đoạn thử trên Pi, đổi chỉ số camera nếu danh sách thiết bị khác:
 
 ```bash
-.venv/bin/python - <<'PY'
+edge/.venv/bin/python - <<'PY'
 import cv2
 cap = cv2.VideoCapture(0)
 try:
@@ -1015,14 +1024,16 @@ PY
 
 Đoạn này không mở cửa sổ nên chạy được qua SSH. Không chạy nguyên `lesson02.py` có `imshow` qua SSH thông thường rồi coi lỗi màn hình là lỗi camera. Khi chạy Pi Desktop trực tiếp mới dùng cửa sổ debug. Thiết bị UVC có thể tạo nhiều `/dev/video*`; chọn đúng node capture qua `v4l2-ctl`, sau đó dùng đường dẫn ổn định `/dev/v4l/by-id/...` nếu có.
 
-Tải `yolov8n.pt` bằng Ultralytics hoặc chép trọng số đã có vào `models/`. Đo baseline `.pt` trước, sau đó ví dụ export trên Pi:
+Tải `yolov8n.pt` bằng Ultralytics hoặc chép trọng số đã có vào `models/source/`. Đo baseline `.pt` trước, sau đó ví dụ export trên Pi:
 
 ```bash
-.venv/bin/python - <<'PY'
+edge/.venv/bin/python - <<'PY'
 from ultralytics import YOLO
-model = YOLO('../models/yolov8n.pt')
+model = YOLO('models/source/yolov8n.pt')
 model.export(format='ncnn', imgsz=320)
 PY
+# Đổi tên/di chuyển thư mục export thực tế sang một tên không mơ hồ:
+mv models/source/yolov8n_ncnn_model models/exported/yolov8n-ncnn-320
 ```
 
 Giữ đường dẫn thư mục export do chương trình báo. Thử load thư mục đó bằng `YOLO(..., task='detect')`; inference dùng cùng `imgsz=320`. Nếu thử 416 hoặc 640 thì export/test lại đúng kích thước và ghi riêng kết quả. Export có thể cần tải thêm phụ thuộc nên làm trước ngày demo. [Tài liệu NCNN](https://docs.ultralytics.com/integrations/ncnn/)
@@ -1032,14 +1043,14 @@ Kiểm tra `track(..., tracker='bytetrack.yaml', persist=True)` với backend NC
 Sau khi đã chạy thành công:
 
 ```bash
-.venv/bin/python -m pip freeze > requirements.pi.lock.txt
+edge/.venv/bin/python -m pip freeze > edge/requirements.pi.lock.txt
 ```
 
 ### 24.6 Cấu hình broker Pi và triển khai Spring/PostgreSQL/React trên máy chủ
 
 Trên Pi cài Mosquitto, tạo `edge01`, `node01`, `backend01` với password riêng. Cấu hình listener LAN 1883, `allow_anonymous false`, password_file/acl_file tại `/etc/mosquitto/`; ACL chỉ cấp topic tương ứng mục 10. Khởi động bằng `systemctl`, kiểm tra publish/subscribe giữa Pi, ESP32 và backend bằng dữ liệu giả. Chỉ đặt broker trên Pi; không khởi động thêm broker Windows cùng topic/IP lúc demo.
 
-Máy chủ LAN (laptop demo) chạy PostgreSQL với volume và backup, Spring Boot với `SPRING_DATASOURCE_URL`/thông tin MQTT Pi, React build dùng API Spring. Có thể dùng `infra/compose.server.yaml` cho ba dịch vụ; chỉ chạy sau khi đã viết Dockerfile, cấu hình và migration tương ứng. Phân quyền người dùng Spring gồm ADMIN/MANAGER; màn hình React không đọc DB trực tiếp. Khi mở web trên laptop cùng máy chủ, dùng URL frontend đã cấu hình; khi máy khác mở, giới hạn truy cập theo mạng và auth. Không dùng SSH tunnel cổng 8501 của kiến trúc React mới.
+Máy chủ LAN (laptop demo) chạy PostgreSQL với volume và backup, Spring Boot với `SPRING_DATASOURCE_URL`/thông tin MQTT Pi, React build dùng API Spring. Dùng `deploy/server/compose.yaml`; chỉ bật thêm service backend/frontend sau khi Dockerfile, cấu hình và migration tương ứng đã chạy độc lập. Phân quyền người dùng Spring gồm ADMIN/MANAGER; màn hình React không đọc DB trực tiếp. Khi mở web trên laptop cùng máy chủ, dùng URL frontend đã cấu hình; khi máy khác mở, giới hạn truy cập theo mạng và auth. Không dùng SSH tunnel cổng 8501 của kiến trúc React mới.
 
 Thử tắt máy chủ một cách có kiểm soát rồi kiểm Pi/ESP32 còn cảnh báo; bật lại, kiểm số crossing và ACK không nhân đôi, gap thực vẫn hiển thị. Thử bản tin MQTT giả trước khi ghép camera. Khóa và ghi phiên bản Java/Node/PostgreSQL sau khi chạy thành công, không suy rằng những dòng trên là lệnh deploy đã kiểm chứng.
 
@@ -1047,13 +1058,13 @@ Thử tắt máy chủ một cách có kiểm soát rồi kiểm Pi/ESP32 còn c
 
 | Thành phần                         | Điều chỉnh                                                               |
 | ---------------------------------- | ------------------------------------------------------------------------ |
-| `configs/site01-pi.yaml`           | Đúng camera Linux, model, broker 127.0.0.1, spool path có giới hạn       |
+| `configs/examples/site01-pi.yaml`  | Đúng camera Linux, model, broker 127.0.0.1, spool path có giới hạn       |
 | `edge/retailvision/main.py`        | Chạy headless, không gọi `imshow`, camera/model/tracker một lần          |
 | `edge/retailvision/event_spool.py` | Ghi metadata chưa ACK; replay sau khi Spring commit; kiểm overflow       |
 | `backend`                          | Subscribe broker Pi IP LAN; Flyway migration; unique key; storage ACK    |
 | `frontend`                         | API origin đúng máy chủ LAN; đăng nhập và trạng thái stale               |
 | `firmware`                         | Broker IP Pi; ACK theo event_id; node UNKNOWN khi state timeout          |
-| `deploy/pi/retail-edge.service`    | `WorkingDirectory=/home/rv/RetailVision-IoT/edge`, lệnh Python tương ứng |
+| `deploy/pi/systemd/retail-edge.service` | `WorkingDirectory=/home/rv/RetailVision/edge`, lệnh Python tương ứng |
 
 Đường dẫn và cấu hình trên phải được kiểm tra trên phần cứng; chuyển code không chuyển `.venv` hoặc mật khẩu thật.
 
@@ -1111,9 +1122,9 @@ After=network-online.target mosquitto.service
 Type=simple
 User=rv
 SupplementaryGroups=video
-WorkingDirectory=/home/rv/RetailVision-IoT/edge
+WorkingDirectory=/home/rv/RetailVision/edge
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/home/rv/RetailVision-IoT/edge/.venv/bin/python -m retailvision.main --config ../configs/site01-pi.yaml --headless
+ExecStart=/home/rv/RetailVision/edge/.venv/bin/python -m retailvision.main --config ../configs/examples/site01-pi.yaml --headless
 Restart=on-failure
 RestartSec=5
 

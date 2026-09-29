@@ -1,0 +1,36 @@
+# Secrets
+.env
+**/.env
+**/secrets.h
+!**/secrets.example.h
+
+# Python
+**/.venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Java
+**/target/
+
+# Node
+**/node_modules/
+**/dist/
+
+# Runtime and local data
+**/runtime/
+data/raw/*
+!data/raw/README.md
+models/source/*
+models/exported/*
+!models/source/README.md
+!models/exported/README.md
+evaluation/results/*
+!evaluation/results/README.md
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
