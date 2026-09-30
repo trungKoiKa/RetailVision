@@ -1,4 +1,4 @@
-#  KẾ HOẠCH TRIỂN KHAI ĐỒ ÁN
+# KẾ HOẠCH TRIỂN KHAI ĐỒ ÁN
 
 **Định hướng:** Pi 4 xử lý một camera và chạy Mosquitto; ESP32 nhận cảnh báo qua MQTT; Spring Boot + PostgreSQL + React trên máy chủ LAN.  
 **Tên đề tài:** “Thiết kế hệ thống giám sát lưu lượng khách ứng dụng thị giác máy tính tại biên”.
@@ -242,11 +242,11 @@
 
 | Phần báo cáo        | Các mục kế hoạch cung cấp nội dung | Trọng tâm khi viết                               |
 | ------------------- | ---------------------------------- | ------------------------------------------------ |
-| Chương 1            | 1, 2, 7, 9, 10, 22, 23, 24         | Bối cảnh, giải pháp liên quan và cơ sở công nghệ |
+| Chương 1            | 1, 2, 6, 7, 9, 10, 21               | Bối cảnh, giải pháp liên quan và cơ sở công nghệ |
 | Chương 2            | 2–6, 8–12, 14, 15                  | Yêu cầu, thiết kế, các quyết định kỹ thuật       |
-| Chương 3            | 4–12, 14, 20, 24                   | Lắp đặt, hiện thực và cấu hình đã triển khai     |
-| Chương 4            | 13, 15, 17–19, 24                  | Dữ liệu, thử nghiệm, kết quả đo và hạn chế       |
-| Kết luận và phụ lục | 19, 20, 22                         | Mức hoàn thành, bàn giao, nguồn và hướng mở rộng |
+| Chương 3            | 4–12, 14, 19, 21                   | Lắp đặt, hiện thực và cấu hình đã triển khai     |
+| Chương 4            | 13, 15–18, 21                      | Dữ liệu, thử nghiệm, kết quả đo và hạn chế       |
+| Kết luận và phụ lục | 6, 18, 19                          | Mức hoàn thành, bàn giao, nguồn và hướng mở rộng |
 
 ### Tài liệu tham khảo chính dự kiến
 
@@ -261,3 +261,5 @@
 | TK07 | [React](https://react.dev/) và [Vite](https://vite.dev/guide/)                                                                       | Web dashboard                                               |
 
 ---
+
+Tài liệu điều phối: [PRD](./RetailVision_PRD.md), [kế hoạch kỹ thuật](./TrienKhai.md) và [checklist khởi tạo](./implementation-checklist.md).

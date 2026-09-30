@@ -15,7 +15,7 @@ biên. Chưa có mã ứng dụng hoặc cấu hình triển khai hoàn chỉnh.
 - `deploy/`: cấu hình triển khai Pi và máy chủ LAN.
 - `docs/`: đặc tả, kế hoạch và hướng dẫn triển khai.
 
-Đọc [kế hoạch khởi tạo](docs/KE_HOACH_KHOI_TAO.md) trước khi bắt đầu lập trình.
+Đọc [checklist khởi tạo](docs/implementation-checklist.md) trước khi bắt đầu lập trình.
 
 ## Nguyên tắc khi bắt đầu hiện thực
 

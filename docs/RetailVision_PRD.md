@@ -104,7 +104,7 @@ Nhận dạng khuôn mặt, lưu ID người dài hạn, kết nối POS, dự b
 
 ### 6.2 Thay cấu hình
 
-Quản lý có quyền nhập ngưỡng trên React → Spring kiểm kiểu/quyền/miền giá trị, publish `config/set` có `request_id` và phiên bản mong đợi → Pi kiểm và trả `config/result` → web hiển thị PENDING/APPLIED/REJECTED. Hết thời gian chờ mà không có kết quả thì hiển thị “chưa xác nhận áp dụng”, không tự kết luận đã thành công.
+Quản lý có quyền nhập ngưỡng trên React → Spring kiểm kiểu/quyền/miền giá trị, publish `settings/set` có `request_id` và `expected_settings_revision` → Pi kiểm và trả `settings/result` → web hiển thị PENDING/APPLIED/REJECTED. Hết thời gian chờ mà không có kết quả thì hiển thị “chưa xác nhận áp dụng”, không tự kết luận đã thành công. `config_version` vẫn chỉ phiên bản profile kỹ thuật đầy đủ của edge, không đồng nghĩa revision ngưỡng sửa từ web.
 
 ### 6.3 Sự cố và phục hồi
 
@@ -223,8 +223,9 @@ Thành công về lợi ích vận hành (ví dụ giảm chờ) cần đánh gi
 
 ## 16. Tài liệu tham khảo
 
-- [Kế hoạch triển khai RetailVision cùng phiên bản kiến trúc](./RetailVision_Ke_Hoach.md).
-- [Kế hoạch khởi tạo mã nguồn theo từng giai đoạn](./KE_HOACH_KHOI_TAO.md).
+- [Kế hoạch kỹ thuật và kiến trúc triển khai](./TrienKhai.md).
+- [Đề cương và ánh xạ nội dung báo cáo](./RetailVision_Ke_Hoach.md).
+- [Checklist khởi tạo theo từng giai đoạn](./implementation-checklist.md).
 - PRD `EDUA-Physics-PRD-Tieng-Viet.md` do người dùng cung cấp: tham khảo cấu trúc và cách đặt ID/tiêu chí nghiệm thu; không dùng nội dung nghiệp vụ giáo dục cho RetailVision.
 - [YOLO Watchdog, commit 21b4d0a](https://github.com/kysutrung/yolo_watchdog/tree/21b4d0a78e358bbcb19fc854b5ab6fed5bea0e1f): tham khảo luồng phát hiện và thiết bị cảnh báo.
 - Tài liệu công nghệ liên kết trong phần tài liệu tham khảo của kế hoạch triển khai.

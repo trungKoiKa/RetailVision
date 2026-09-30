@@ -1,35 +1,36 @@
+# Kế hoạch triển khai kỹ thuật RetailVision
+
 ## Mục lục kế hoạch triển khai chi tiết
 
 - 1. Bài toán và problem statement
-- 1. Phạm vi và kết quả cần có
-- 1. Kiến trúc hệ thống
-- 1. Phần cứng và dự toán
-- 1. Khảo sát, lắp camera và bố trí mô hình
-- 1. Phần mềm và môi trường Windows
-- 1. Cấu trúc thư mục dự án và phương án kế thừa YOLO Watchdog
-- 1. Cấu hình camera và thuật toán
-- 1. MQTT và cấu hình mạng
-- 1. Thiết kế firmware
-- 1. Dữ liệu, lưu trữ và dashboard
-- 1. Thu thập dữ liệu và fine-tune
-- 1. Luồng chạy và phục hồi lỗi
-- 1. Yêu cầu và tiêu chí nghiệm thu
-- 1. Kế hoạch 10 tuần
-- 1. Kịch bản kiểm thử và demo
-- 1. Thử nghiệm tại cửa hàng
-- 1. Rủi ro và phương án thu gọn
-- 1. Sản phẩm bàn giao và báo cáo
-- 1. Việc cần làm trong 7 ngày tới
-- 1. Thuật ngữ và tài liệu tham khảo
-- 1. Triển khai và trình diễn bằng Raspberry Pi
+- 2. Phạm vi và kết quả cần có
+- 3. Kiến trúc hệ thống
+- 4. Phần cứng và dự toán
+- 5. Khảo sát, lắp camera và bố trí mô hình
+- 6. Thuật ngữ và quy ước
+- 7. Phần mềm và môi trường phát triển
+- 8. Cấu trúc thư mục dự án và phương án kế thừa
+- 9. Cấu hình camera và thuật toán
+- 10. MQTT và cấu hình mạng
+- 11. Thiết kế firmware
+- 12. PostgreSQL, Spring Boot và React dashboard
+- 13. Thu thập dữ liệu và fine-tune
+- 14. Luồng chạy và phục hồi lỗi
+- 15. Yêu cầu và tiêu chí nghiệm thu
+- 16. Kịch bản kiểm thử và demo
+- 17. Thử nghiệm tại cửa hàng
+- 18. Rủi ro và phương án thu gọn
+- 19. Sản phẩm bàn giao và báo cáo
+- 20. Việc cần làm trong 7 ngày tới
+- 21. Triển khai Pi 4 và máy chủ web LAN
 
-Giữ số mục của bản đang triển khai để các tham chiếu kỹ thuật ổn định; mục 6 đã được người dùng bỏ, phần cạnh tranh cũ ở mục 23 đã chuyển vào 1.4.
+Các mục được đánh số liên tục. Kế hoạch theo tuần được thay bằng checklist có cổng hoàn thành tại [`implementation-checklist.md`](./implementation-checklist.md); phần cạnh tranh được đặt tại mục 1.4.
 
 ---
 
 ## 1. Bài toán và problem statement
 
-### 1.0 Bối cảnh và lý do hình thành đề tài
+### Bối cảnh và lý do hình thành đề tài
 
 Để đánh giá hoạt động một điểm bán, người quản lý cần phân biệt ba câu hỏi: có bao nhiêu lượt người đến, hoạt động mua hàng tạo ra kết quả gì, và khu vực phục vụ có đáp ứng được nhu cầu tại từng thời điểm hay không. Ba câu hỏi liên quan nhưng không thay thế nhau. Dữ liệu hóa đơn mô tả giao dịch đã phát sinh; nếu chỉ có hóa đơn thì chưa biết đầy đủ những lượt ghé không mua hàng hoặc khách đến vào lúc nào trước khi thanh toán. Ngược lại, số người qua cửa không cho biết họ có mua hàng hay đang phải chờ tại quầy. Đây là lập luận về các loại dữ liệu cần phân biệt khi thiết kế đồ án, chưa phải kết luận từ khảo sát một cửa hàng cụ thể.
 
@@ -128,7 +129,7 @@ Không dùng các câu sau làm kết luận cạnh tranh khi chưa có bằng c
 
 #### 1.4.5 Nhược điểm hiện tại của RetailVision cần ghi nhận
 
-Đây vẫn là thiết kế cần triển khai. Camera RGB một góc nhìn còn nhạy với che khuất và ánh sáng; tracking có thể đổi ID. Máy edge, nay chọn Raspberry Pi, phải được duy trì nguồn, tiến trình và cập nhật. Chưa có số đo độ tin cậy dài hạn, dịch vụ bảo hành, quản lý nhiều cửa hàng hoặc phân quyền hoàn chỉnh. Khi phải mua Pi cùng phụ kiện và thuê người bảo trì, lợi thế chi phí linh kiện có thể giảm đáng kể. Các so sánh tận dụng PC tại mục 1.4 phải được tính lại cho BOM Pi ở mục 24.
+Đây vẫn là thiết kế cần triển khai. Camera RGB một góc nhìn còn nhạy với che khuất và ánh sáng; tracking có thể đổi ID. Máy edge, nay chọn Raspberry Pi, phải được duy trì nguồn, tiến trình và cập nhật. Chưa có số đo độ tin cậy dài hạn, dịch vụ bảo hành, quản lý nhiều cửa hàng hoặc phân quyền hoàn chỉnh. Khi phải mua Pi cùng phụ kiện và thuê người bảo trì, lợi thế chi phí linh kiện có thể giảm đáng kể. Các so sánh tận dụng PC tại mục 1.4 phải được tính lại cho BOM Pi ở mục 21.
 
 Nếu cửa hàng đã có camera Axis tương thích, hoặc cần sản phẩm được nhà cung cấp chịu trách nhiệm vận hành ngay, tự phát triển chưa chắc là lựa chọn kinh tế hơn. Nếu mục tiêu là đồ án và pilot một quầy với máy sẵn có, quyền chủ động thử nghiệm của RetailVision có giá trị rõ hơn.
 
@@ -219,11 +220,11 @@ Ba tình huống cho thấy hai đầu ra có vai trò khác nhau: lưu lượng
 - Xử lý ảnh tại chỗ, không lưu/truyền video ở chế độ vận hành; debug và video nghiên cứu tách riêng.
 - Kiểm thử đồng thời cửa và vùng chờ, sai số theo từng khu vực, hiệu năng Pi, offline và phục hồi lỗi.
 
-### 2.3 Kết quả có thể trình diễn
+### 2.2 Kết quả có thể trình diễn
 
 Người đi qua cửa làm lượt vào/ra thay đổi trong khi vùng chờ vẫn được giám sát. Dashboard có báo cáo theo giờ từ dữ liệu thật. Khi ít nhất 5 người đủ dwell hiện diện trong vùng chờ liên tục 60 giây, tạo một sự kiện và bật đèn đỏ ở vị trí hỗ trợ. Nhấn nút ghi nhận tiếp nhận; đèn đỏ vẫn giữ cho tới khi không quá 3 người liên tục 10 giây. Mất camera/phân tích hết hạn cho trạng thái UNKNOWN, không báo 0 người. Mất Internet không dừng lõi khi LAN còn hoạt động.
 
-### 2.4 Hồ sơ tham số thử nghiệm và demo
+### 2.3 Hồ sơ tham số thử nghiệm và demo
 
 | Tham số                              | Profile thử nghiệm ban đầu | Profile demo rút ngắn |
 | ------------------------------------ | -------------------------- | --------------------- |
@@ -276,13 +277,13 @@ Bảng này phục vụ giai đoạn phát triển trên Windows.
 | Router/AP 2,4 GHz                                                     | 1        | Cho các thiết bị LAN liên lạc; có DHCP reservation                         | Mạng tại chỗ                                      |
 | Giá giữ camera, hộp mạch, vật tư cố định                              | 1 bộ     | Không rung; dây không vướng lối đi                                         | Lắp đặt                                           |
 
-### 4.3 Thiết bị triển khai đã chọn
+### 4.2 Thiết bị triển khai đã chọn
 
-Chọn Raspberry Pi 4 4 GB làm thiết bị xử lý tại biên; hệ thống web/database chạy trên máy chủ LAN. Giữ bản Windows làm công cụ phát triển và phương án debug. Đo lại toàn luồng trên Pi; không lấy FPS laptop làm kết quả của Pi. Nếu Pi chưa đạt, tối ưu CPU và rà lại phạm vi có bằng chứng theo mục 24.9
+Chọn Raspberry Pi 4 4 GB làm thiết bị xử lý tại biên; hệ thống web/database chạy trên máy chủ LAN. Giữ bản Windows làm công cụ phát triển và phương án debug. Đo lại toàn luồng trên Pi; không lấy FPS laptop làm kết quả của Pi. Nếu Pi chưa đạt, tối ưu CPU và rà lại phạm vi có bằng chứng theo mục 21.9.
 
 ## 5. Khảo sát, lắp camera và bố trí mô hình
 
-### 5.2 Chọn vị trí và góc nhìn bằng ảnh thử
+### 5.1 Chọn vị trí và góc nhìn bằng ảnh thử
 
 1. Dùng điện thoại quay thử từ vị trí dự kiến để khảo sát bố cục, sau đó xác nhận lại bằng đúng webcam. Góc rộng/chất lượng điện thoại không đại diện cho webcam.
 2. Cố định camera cao hơn tầm hoạt động thông thường,Ghi số đo thực tế vào biên bản lắp.
@@ -294,7 +295,7 @@ Chọn Raspberry Pi 4 4 GB làm thiết bị xử lý tại biên; hệ thống 
 
 Nguồn ảnh khảo sát đề xuất 1280×720 nếu webcam hỗ trợ. Đây khác kích thước đầu vào model. Đọc `frame.shape` để kiểm tra camera thực sự trả về; mọi phép resize/letterbox phải quy đổi tọa độ về ảnh gốc. Nguồn 640×480 chỉ là phương án benchmark giảm tải có kiểm thử lại hai vùng, không mặc định phù hợp góc bao quát.
 
-### 5.3 Tiêu chí thông qua góc camera trước khi tích hợp
+### 5.2 Tiêu chí thông qua góc camera trước khi tích hợp
 
 | Nội dung                                              | Bằng chứng cần giữ                                 | Khi không đạt                                           |
 | ----------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------- |
@@ -306,7 +307,7 @@ Nguồn ảnh khảo sát đề xuất 1280×720 nếu webcam hỗ trợ. Đây 
 
 Mô hình chỉ thông qua khi cả hai chức năng cùng đáp ứng tiêu chí đã thống nhất. Nếu một camera không phù hợp địa điểm thực tế, báo rõ địa điểm không đáp ứng phạm vi; mô hình lab phù hợp vẫn có thể dùng để đánh giá nguyên mẫu. Thêm camera là một thiết kế mở rộng, không nằm trong BOM này.
 
-### 5.4 Trình tự lắp và hiệu chuẩn
+### 5.3 Trình tự lắp và hiệu chuẩn
 
 LED đỏ: cần kiểm tra/hỗ trợ; xanh: chưa có cảnh báo trong vùng giám sát;
 
@@ -314,20 +315,63 @@ vàng: không có dữ liệu tin cậy
 
 Xanh không có nghĩa toàn cửa hàng không ùn khách.
 
-Lưu `docs/camera-calibration.md`: ngày lắp, ảnh/sơ đồ, chiều cao và góc nghiêng đo thực tế, camera/độ phân giải, tọa độ chuẩn hóa của vạch/vùng, chiều vào, model size, config_version và kết quả test. Video chứa người chỉ giữ trong dữ liệu nghiên cứu được phép, không đưa vào repository công khai.
+Lưu `docs/operations/camera-calibration.md`: ngày lắp, ảnh/sơ đồ, chiều cao và góc nghiêng đo thực tế, camera/độ phân giải, tọa độ chuẩn hóa của vạch/vùng, chiều vào, model size, `config_version` và kết quả test. Video chứa người chỉ giữ trong dữ liệu nghiên cứu được phép, không đưa vào repository công khai.
+
+## 6. Thuật ngữ và quy ước
+
+### 6.1 Thuật ngữ
+
+| Thuật ngữ         | Nghĩa trong đồ án                                               |
+| ----------------- | --------------------------------------------------------------- |
+| Problem statement | Mô tả ai gặp vấn đề, vấn đề gì và phạm vi cần giải quyết        |
+| Baseline          | Phiên bản đầu để làm mốc so sánh                                |
+| Inference         | Dùng model đã học để dự đoán ảnh mới                            |
+| Bounding box      | Khung bao đối tượng                                             |
+| ROI               | Vùng quan tâm trong ảnh                                         |
+| Tracking          | Nối các quan sát theo thời gian bằng ID tạm                     |
+| Edge              | Xử lý tại nơi thu thập dữ liệu                                  |
+| MQTT broker       | Máy chủ chuyển bản tin theo topic                               |
+| Retain            | Broker giữ bản tin cuối của topic để gửi cho subscriber mới     |
+| LWT               | Bản tin broker phát khi phát hiện client mất kết nối bất thường |
+| Hysteresis        | Ngưỡng bật và tắt khác nhau để giảm dao động                    |
+| Ground truth      | Nhãn/số liệu đối chiếu do người kiểm tra tạo                    |
+| Coverage          | Tỷ lệ thời gian hệ thống có dữ liệu hợp lệ để kết luận          |
+| Freshness         | Tuổi của dữ liệu mới nhất tại thời điểm quan sát                |
+| MAE               | Sai số tuyệt đối trung bình                                     |
+| Precision sự kiện | Trong các cảnh báo đã phát, tỷ lệ cảnh báo đúng                 |
+| Recall sự kiện    | Trong các sự kiện thật, tỷ lệ được phát hiện                    |
+| p95               | Mức mà khoảng 95% mẫu đo không vượt quá                         |
+| Pilot             | Thử nghiệm có giới hạn ở môi trường thực                        |
+
+### 6.2 Quy ước tên và đường dẫn
+
+- `config/` trong mã nguồn chỉ chứa cấu hình kỹ thuật/framework như bean Spring hoặc loader YAML; không đặt nghiệp vụ tại đây.
+- `settings` là ngưỡng nghiệp vụ người dùng có thể thay đổi và có vòng đời PENDING/APPLIED/REJECTED; thống nhất dùng tên số nhiều trong package, API và topic. `config`/`config_version` chỉ profile kỹ thuật đầy đủ của edge, gồm cả phần không cho sửa từ web như camera, ROI và model.
+- `configs/` ở gốc repository chứa file cấu hình mẫu theo môi trường; bí mật thật nằm ngoài Git.
+- JSON dùng `snake_case`; Java/TypeScript dùng quy ước ngôn ngữ và ánh xạ tại ranh giới DTO.
+- ID dùng UUID dạng chuỗi; thời gian truyền/lưu là ISO 8601 UTC; múi giờ `Asia/Ho_Chi_Minh` chỉ áp dụng khi hiển thị hoặc tổng hợp báo cáo.
+- Tài liệu MQTT đặt tại `docs/architecture/mqtt-topics.md`; hiệu chuẩn và lắp đặt đặt tại `docs/operations/`; checklist khởi tạo là `docs/implementation-checklist.md`.
+- Compose duy nhất của máy chủ là `deploy/server/compose.yaml`; không tạo thêm thư mục `deploy/server/compose/`.
 
 ## 7. Phần mềm và môi trường phát triển
 
 ### 7.1 Danh sách cần cài
 
-| Nhóm                 | Công nghệ                                                                                         | Mục đích                                       |
-| -------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Edge trên Windows/Pi | Python venv, OpenCV, NumPy, Ultralytics, paho-mqtt, PyYAML                                        | Camera, YOLO/ByteTrack, MQTT, cấu hình         |
-| Backend Java         | JDK 21, Spring Boot, Spring Web, Spring Security, Spring Data JPA, MQTT client Java, Flyway       | API, đăng nhập 2 vai trò, nhận MQTT, migration |
-| Database             | PostgreSQL                                                                                        | Lưu số liệu, tài khoản, cấu hình và cảnh báo   |
-| Frontend             | Node.js phiên bản tương thích, React, TypeScript, Vite, React Router, thư viện gọi API và biểu đồ | Dashboard web                                  |
-| IoT                  | Mosquitto trên Pi, Arduino IDE, ESP32 core, PubSubClient, ArduinoJson                             | Truyền trạng thái/ACK và firmware              |
-| Kiểm thử/triển khai  | Git, pytest, JUnit, trình duyệt; Docker Compose tùy chọn cho backend và database trên máy chủ     | Đánh giá và vận hành                           |
+Baseline dưới đây được đề xuất tại ngày 30-09-2026. Ưu tiên dòng LTS/maintenance và mức tương thích hơn việc chạy theo bản mới nhất. Sau khi qua lát cắt ở giai đoạn 2, ghi **đúng phiên bản đã giải quyết** vào lockfile, Maven Wrapper, `package-lock.json` và hồ sơ benchmark; không tự nâng major trước ngày nghiệm thu.
+
+| Thành phần | Baseline đề xuất | Cách khóa và lý do |
+| --- | --- | --- |
+| Raspberry Pi OS | Lite 64-bit, Debian 13 (Trixie), image 18-06-2026 | Headless, chính thức hỗ trợ Pi 4; lưu ngày image và kernel thực tế |
+| Python edge | Python 3.13.x | Dùng cùng minor trên Windows/Pi; khóa wheel chạy được trên ARM64 trong `requirements.pi.lock.txt` |
+| Vision/MQTT Python | Ultralytics 8.3.x, OpenCV 4.x, NumPy 2.x, paho-mqtt 2.1.x, PyYAML 6.x | Chọn patch sau spike `.pt`/NCNN; không chép lock Windows sang Pi |
+| Java/backend | Eclipse Temurin JDK 21 LTS, Spring Boot 3.5.16, Maven Wrapper 3.9.x | Bám Java LTS và dòng Boot 3.5 quen thuộc; để Spring Boot BOM quản lý dependency trước khi có lý do override |
+| Database/migration | PostgreSQL 17.11, Flyway theo Spring Boot BOM | PostgreSQL 17 còn hỗ trợ đến 2029; cập nhật minor trong cùng major sau khi backup/restore test đạt |
+| Frontend | Node.js 24 LTS, React 19.2.x, TypeScript 5.9.x, Vite 7.x | Commit `package-lock.json`; Vite 7 đáp ứng Node 24, tránh Node Current cho đồ án |
+| Broker | Mosquitto 2.1.2 | Khóa cấu hình/ACL theo 2.1; lưu ý `password_file` và `acl_file` đã có hướng deprecate ở dòng này |
+| ESP32 | Arduino-ESP32 3.3.11, PubSubClient 2.8.x, ArduinoJson 7.x | Khóa board core và library trong hồ sơ build; test lại khi đổi minor |
+| Kiểm thử/triển khai | pytest theo lock edge, JUnit/Testcontainers theo Boot BOM, Docker Compose v2 | Compose là tùy chọn trên máy chủ; broker cuối vẫn chạy như dịch vụ trên Pi |
+
+Nguồn để kiểm tra lại trước khi cài: [Raspberry Pi OS](https://www.raspberrypi.com/software/operating-systems/), [Spring Boot 3.5 system requirements](https://docs.spring.io/spring-boot/3.5/system-requirements.html), [PostgreSQL versioning](https://www.postgresql.org/support/versioning/), [Node.js releases](https://nodejs.org/en/about/previous-releases), [Vite guide](https://vite.dev/guide/), [Mosquitto releases](https://mosquitto.org/blog/categories/releases/) và [Arduino-ESP32 documentation](https://docs.espressif.com/projects/arduino-esp32/en/latest/).
 
 ### 7.2 Cài môi trường edge trên Windows
 
@@ -340,14 +384,14 @@ python -m venv edge/.venv
 .\edge\.venv\Scripts\python.exe -m pip install -r edge/requirements.txt
 .\edge\.venv\Scripts\python.exe -m pip check
 Set-Location edge
-.\.venv\Scripts\python.exe -m retailvision.main --config ../configs/examples/site01-demo.yaml --check-config
+.\.venv\Scripts\python.exe -m retailvision.app --config ../configs/examples/site01-demo.yaml --check-config
 ```
 
-Tạo ứng dụng Spring Boot riêng trong `backend/` và dự án Vite React TypeScript ở `frontend/`; JDK/Node phải kiểm phiên bản tương thích tại thời điểm cài. PostgreSQL chạy trên máy chủ LAN, schema thay đổi qua Flyway. Có thể dùng Docker Compose cho `backend + postgres + frontend` trên cùng máy chủ nếu nhóm quen Docker; broker Pi dùng dịch vụ hệ thống theo mục 24.6.
+Tạo ứng dụng Spring Boot riêng trong `backend/` và dự án Vite React TypeScript ở `frontend/`; JDK/Node phải kiểm phiên bản tương thích tại thời điểm cài. PostgreSQL chạy trên máy chủ LAN, schema thay đổi qua Flyway. Có thể dùng Docker Compose cho `backend + postgres + frontend` trên cùng máy chủ nếu nhóm quen Docker; broker Pi dùng dịch vụ hệ thống theo mục 21.6.
 
-### 7.3 Model và phiên bản
+### 7.3 Model và nguyên tắc khóa phiên bản
 
-Kiểm tra `model.names`, nguồn trọng số và đường dẫn model. Ghi phiên bản môi trường riêng cho Python Windows, Pi ARM64, Java và frontend khi chạy thành công; không chép `.venv` từ Windows sang Pi.
+Kiểm tra `model.names`, nguồn trọng số, checksum và đường dẫn model. Baseline bảng 7.1 là điểm bắt đầu, không thay cho lockfile. Ghi phiên bản môi trường riêng cho Python Windows, Pi ARM64, Java và frontend khi chạy thành công; không chép `.venv` từ Windows sang Pi. Mọi kết quả đánh giá phải gắn commit, phiên bản dependency, model checksum, image size và `config_version`.
 
 ### 7.4 Firmware
 
@@ -357,96 +401,287 @@ Arduino IDE nạp sketch `firmware/retail_alert/`, dùng PubSubClient và Arduin
 
 ### 8.1 Một repo, ba tiến trình vận hành
 
-Phát triển trực tiếp trong repository `RetailVision`; Pi nhận `edge/`, `configs/`, `models/`, `contracts/` và phần triển khai của Pi, còn máy chủ nhận `backend/`, `frontend/`, `contracts/` và phần triển khai của máy chủ. Không chuyển môi trường Python Windows sang Pi. Cây dưới đây là cấu trúc chuẩn của repository; module nào chưa hiện thực phải giữ README hoặc skeleton mô tả trách nhiệm, không tạo hàng loạt file rỗng khó kiểm soát.
+Phát triển trực tiếp trong repository `RetailVision`; Pi nhận `edge/`, `configs/`, `models/`, `contracts/` và phần triển khai của Pi, còn máy chủ nhận `backend/`, `frontend/`, `contracts/` và phần triển khai của máy chủ. Không chuyển môi trường Python Windows sang Pi. Cây dưới đây là **thiết kế mục tiêu để triển khai dần**, không phải danh sách file đã tồn tại. Chỉ tạo một nhánh khi bắt đầu làm chức năng tương ứng; không tạo hàng loạt file rỗng.
 
-### 8.2 Cây thư mục
+### 8.2 Cây thư mục mục tiêu và trách nhiệm
 
 ```text
 RetailVision/
-├── edge/                              # Python chạy trên Pi 4
+├── edge/                                      # Ứng dụng Python chạy headless trên Pi 4
 │   ├── retailvision/
-│   │   ├── __init__.py
-│   │   ├── main.py                    # Một camera/model/tracker cho hai nhánh
-│   │   ├── capture.py                 # Đọc camera, timestamp, reconnect
-│   │   ├── vision.py                  # YOLO/ByteTrack; bbox/class/ID tạm
-│   │   ├── geometry.py                # Đường đếm, đa giác ROI
-│   │   ├── counting.py                # Lượt vào/ra theo hướng, chống lặp
-│   │   ├── queue_monitor.py           # Dwell và số người đủ điều kiện
-│   │   ├── alerts.py                  # NORMAL/OVERLOAD/UNKNOWN, hold/hysteresis
-│   │   ├── overlay.py                 # Vẽ minh họa khi hiệu chuẩn/demo
-│   │   ├── preview.py                 # Ảnh xem trước LAN khi bật demo
-│   │   ├── mqtt_client.py             # State, event, ACK, config, reconnect
-│   │   ├── event_spool.py             # JSONL bounded; replay sau ACK DB
-│   │   └── config.py
-│   ├── experiments/                   # detect, track, zone, MQTT giả
-│   ├── tests/                         # hình học, crossing, timer, trùng event
-│   ├── requirements.txt
-│   ├── requirements-dev.txt
-│   ├── requirements.pi.lock.txt
-│   └── README.md
-├── backend/                           # Java 21 / Spring Boot trên máy chủ LAN
-│   ├── pom.xml                        # Maven; cố định phiên bản sau khi chọn
-│   └── src/
-│       ├── main/java/.../retailvision/
-│       │   ├── api/                    # Controller + DTO cho React
-│       │   ├── security/               # Đăng nhập, phân quyền ADMIN/MANAGER
-│       │   ├── mqtt/                   # Consumer, publish config, storage ACK
-│       │   ├── domain/                 # Entity, repository, service, report
-│       │   └── config/                 # MQTT, DB, timezone, CORS theo LAN
-│       ├── main/resources/
-│       │   ├── application-example.yml
-│       │   └── db/migration/           # Flyway V001__init.sql...
-│       └── test/java/.../retailvision/ # Test API, idempotency, role
-├── frontend/                          # React + TypeScript + Vite
-│   ├── package.json
+│   │   ├── app.py                             # Composition root; nối các module, không chứa thuật toán
+│   │   ├── core/
+│   │   │   ├── types.py                       # Kiểu dữ liệu dùng chung: frame, track, event, state
+│   │   │   └── clock.py                       # Nguồn thời gian thay thế được để test timer
+│   │   ├── pipeline/
+│   │   │   ├── capture.py                     # Camera/video, timestamp, latest-frame, reconnect
+│   │   │   ├── detector.py                    # Adapter YOLO; chỉ trả detection chuẩn hóa
+│   │   │   ├── tracker.py                     # Adapter ByteTrack; quản lý ID tạm theo session
+│   │   │   └── runner.py                      # Một vòng xử lý dùng chung cho cửa và vùng chờ
+│   │   ├── analytics/
+│   │   │   ├── geometry.py                    # Vạch, polygon, scale tọa độ và phép kiểm tra điểm
+│   │   │   ├── crossing.py                    # Đếm IN/OUT, deadband và chống đếm lặp
+│   │   │   ├── queue.py                       # Dwell và số người đủ điều kiện trong vùng
+│   │   │   └── alert_state.py                 # NORMAL/OVERLOAD/UNKNOWN, hold và hysteresis
+│   │   ├── messaging/
+│   │   │   ├── mqtt_client.py                 # Kết nối, publish/subscribe, retry và reconnect
+│   │   │   ├── topics.py                      # Tạo/kiểm topic theo site, camera và device
+│   │   │   └── payloads.py                    # Map domain event sang contract MQTT
+│   │   ├── resilience/
+│   │   │   ├── event_spool.py                 # Metadata bounded; replay sau storage ACK
+│   │   │   └── health.py                      # Freshness camera/analysis/broker và coverage gap
+│   │   ├── presentation/
+│   │   │   ├── overlay.py                     # Overlay chỉ dùng hiệu chuẩn/demo
+│   │   │   └── preview.py                     # Preview LAN có công tắc bật/tắt
+│   │   └── config/
+│   │       ├── loader.py                      # Đọc YAML/env và chuẩn hóa đường dẫn
+│   │       └── validation.py                  # Kiểm kiểu, miền giá trị và quan hệ ngưỡng
+│   ├── experiments/
+│   │   ├── camera/                            # Thử UVC, độ phân giải và node video
+│   │   ├── models/                            # So .pt/NCNN và kích thước đầu vào
+│   │   └── mqtt/                              # Publish/subscribe giả trước khi ghép pipeline
+│   ├── tests/
+│   │   ├── unit/                              # Geometry, crossing, dwell, timer, hysteresis
+│   │   ├── integration/                       # Camera file, MQTT và spool/replay
+│   │   └── fixtures/                          # Frame metadata, track và payload mẫu
+│   ├── requirements.txt                       # Phụ thuộc trực tiếp, dùng cho phát triển
+│   ├── requirements-dev.txt                   # pytest và công cụ chất lượng
+│   ├── requirements.pi.lock.txt               # Freeze trên đúng Pi/ARM64 sau khi chạy được
+│   └── README.md                              # Lệnh chạy, test và giới hạn edge
+├── firmware/
+│   └── retail_alert/                          # Firmware ESP32 tại vị trí nhân viên hỗ trợ
+│       ├── src/
+│       │   ├── main.cpp                       # setup/loop; chỉ điều phối module
+│       │   ├── wifi_manager.cpp               # Kết nối Wi-Fi và backoff
+│       │   ├── mqtt_gateway.cpp               # State subscription và ACK publication
+│       │   ├── alert_state.cpp                # UNKNOWN/NORMAL/OVERLOAD_UNACKED/ACKED
+│       │   ├── button.cpp                     # Đọc nút, debounce và chống ACK lặp
+│       │   └── led.cpp                        # Ánh xạ trạng thái sang màu/nhấp nháy
+│       ├── include/                            # Header, pin mapping và interface module
+│       ├── test/                               # Test logic state/debounce nếu toolchain hỗ trợ
+│       ├── secrets.example.h                   # Chỉ tên biến mẫu; secrets.h không commit
+│       └── README.md                           # Đấu nối, nạp firmware và test mất broker
+├── backend/                                   # Spring Boot REST API trên máy chủ LAN
+│   ├── .mvn/wrapper/                          # Maven Wrapper để các máy dùng cùng Maven launcher
+│   ├── src/main/java/vn/retailvision/
+│   │   ├── RetailVisionApplication.java       # Entry point và gốc component scan
+│   │   ├── config/                            # Chỉ khai báo bean/cấu hình framework
+│   │   │   ├── MqttConfiguration.java         # MqttClient, connect options và subscription bean
+│   │   │   ├── SecurityConfiguration.java     # SecurityFilterChain, CORS và password encoder
+│   │   │   ├── JacksonConfiguration.java      # UTC/time serialization thống nhất
+│   │   │   └── WebConfiguration.java          # API prefix, locale và web-level config
+│   │   ├── controller/                        # REST controller; không trả entity JPA trực tiếp
+│   │   │   ├── auth/AuthController.java       # Login và thông tin người dùng hiện tại
+│   │   │   ├── dashboard/DashboardController.java # KPI, freshness và coverage
+│   │   │   ├── footfall/FootfallController.java   # Crossing gần nhất và tổng hợp giờ/ngày
+│   │   │   ├── queue/QueueController.java     # Queue sample/history nếu cần API riêng
+│   │   │   ├── alert/AlertController.java     # OPEN/ACK/END/INTERRUPTED
+│   │   │   ├── device/DeviceController.java   # Pi, camera, ESP32 và last_seen
+│   │   │   ├── settings/SettingsController.java # PENDING/APPLIED/REJECTED
+│   │   │   └── report/ReportController.java   # CSV và báo cáo tổng hợp
+│   │   ├── domain/
+│   │   │   ├── entity/                        # Mô hình lưu trữ; không đưa thẳng ra REST
+│   │   │   │   ├── User.java                  # Tài khoản và role
+│   │   │   │   ├── Site.java                  # Điểm triển khai
+│   │   │   │   ├── Camera.java                # Camera logic và cấu hình hiện hành
+│   │   │   │   ├── Device.java                # Pi/ESP32 và last_seen
+│   │   │   │   ├── EdgeSession.java           # Phiên edge sau mỗi lần khởi động
+│   │   │   │   ├── Crossing.java              # Lượt IN/OUT có event_id duy nhất
+│   │   │   │   ├── QueueSample.java           # Số người, valid/UNKNOWN và timestamp
+│   │   │   │   ├── AlertEvent.java            # Vòng đời cảnh báo
+│   │   │   │   ├── AlertAcknowledgement.java  # ACK nhân viên theo event/device
+│   │   │   │   └── SettingsRevision.java      # Phiên bản settings và trạng thái áp dụng
+│   │   │   └── enums/
+│   │   │       ├── Role.java                   # ADMIN/MANAGER
+│   │   │       ├── Direction.java              # IN/OUT
+│   │   │       ├── AlertStatus.java            # OPEN/ACKED/END/INTERRUPTED
+│   │   │       ├── DataQuality.java            # VALID/UNKNOWN/GAP
+│   │   │       └── SettingsStatus.java         # PENDING/APPLIED/REJECTED
+│   │   ├── dto/
+│   │   │   ├── request/                       # Input API có Bean Validation
+│   │   │   │   ├── LoginRequest.java
+│   │   │   │   └── UpdateSettingsRequest.java
+│   │   │   ├── response/                      # Output API, không lộ entity
+│   │   │   │   ├── AuthResponse.java
+│   │   │   │   ├── DashboardOverviewResponse.java
+│   │   │   │   ├── CrossingResponse.java
+│   │   │   │   └── SettingsResponse.java
+│   │   │   └── mqtt/                          # Bám JSON Schema trong contracts/mqtt
+│   │   │       ├── MqttEnvelope.java
+│   │   │       ├── CrossingPayload.java
+│   │   │       ├── QueueStatePayload.java
+│   │   │       ├── AlertPayload.java
+│   │   │       ├── AlertAckPayload.java
+│   │   │       ├── StorageAckPayload.java
+│   │   │       └── SettingsResultPayload.java
+│   │   ├── repository/                        # Spring Data JPA; query đặt tên theo nghiệp vụ
+│   │   │   ├── auth/UserRepository.java
+│   │   │   ├── monitoring/                    # Session, device và queue
+│   │   │   │   ├── EdgeSessionRepository.java
+│   │   │   │   ├── DeviceRepository.java
+│   │   │   │   └── QueueSampleRepository.java
+│   │   │   ├── event/                         # Crossing và alert
+│   │   │   │   ├── CrossingRepository.java
+│   │   │   │   ├── AlertEventRepository.java
+│   │   │   │   └── AlertAcknowledgementRepository.java
+│   │   │   └── settings/SettingsRevisionRepository.java
+│   │   ├── service/                           # Transaction và use case; controller không gọi repo
+│   │   │   ├── auth/AuthService.java           # Login, JWT và user details
+│   │   │   ├── ingestion/                     # Validate → dedupe → commit → storage ACK
+│   │   │   │   ├── CrossingIngestionService.java
+│   │   │   │   ├── QueueIngestionService.java
+│   │   │   │   └── AlertIngestionService.java
+│   │   │   ├── footfall/FootfallService.java  # Tổng hợp crossing và coverage
+│   │   │   ├── queue/QueueService.java        # valid/UNKNOWN và coverage gap
+│   │   │   ├── alert/AlertService.java        # Vòng đời alert và ACK nhân viên
+│   │   │   ├── device/DeviceService.java      # Heartbeat và freshness
+│   │   │   ├── settings/SettingsService.java  # Publish set và xử lý result
+│   │   │   ├── report/ReportService.java      # Dashboard query và CSV
+│   │   │   └── validator/SettingsValidator.java # Ràng buộc ngưỡng nghiệp vụ
+│   │   ├── mqtt/                              # Adapter MQTT, tách khỏi config và nghiệp vụ
+│   │   │   ├── MqttGateway.java               # Publish/subscribe mức giao thức
+│   │   │   ├── MqttMessageRouter.java         # Route topic đến ingestion service phù hợp
+│   │   │   ├── MqttPayloadValidator.java      # Kiểm schema/version trước khi xử lý
+│   │   │   └── MqttTopicRegistry.java         # Topic pattern và quyền publish/subscribe
+│   │   ├── security/
+│   │   │   ├── JwtAuthenticationFilter.java   # Đọc/kiểm token cho mỗi request
+│   │   │   ├── JwtService.java                # Phát và xác minh JWT
+│   │   │   └── RetailVisionUserDetailsService.java
+│   │   ├── mapper/                            # Entity ↔ DTO
+│   │   │   ├── CrossingMapper.java
+│   │   │   └── SettingsMapper.java
+│   │   ├── exception/
+│   │   │   ├── ApiErrorResponse.java          # Lỗi REST có mã ổn định
+│   │   │   ├── GlobalExceptionHandler.java
+│   │   │   └── InvalidPayloadException.java
+│   │   └── util/                              # Chỉ helper thật sự dùng chung
+│   │       ├── Ids.java
+│   │       └── TimeRanges.java
+│   ├── src/main/resources/
+│   │   ├── db/migration/
+│   │   │   ├── V001__baseline.sql             # Site, camera, session và crossing
+│   │   │   ├── V002__monitoring.sql           # Device status và queue sample
+│   │   │   ├── V003__alerts.sql               # Alert event và acknowledgement
+│   │   │   └── V004__settings.sql             # Revision và trạng thái áp dụng
+│   │   ├── application.yml                    # Default an toàn, nhận bí mật từ environment
+│   │   ├── application-example.yml            # Ví dụ LAN không chứa mật khẩu thật
+│   │   └── logback-spring.xml                 # Log có timestamp, correlation/event ID
+│   ├── src/test/java/vn/retailvision/
+│   │   ├── service/                           # Unit test use case/validator
+│   │   ├── mqtt/                              # Router, schema, duplicate và ACK test
+│   │   ├── repository/                        # Query/timezone test
+│   │   └── integration/                       # Testcontainers: MQTT + PostgreSQL + API
+│   ├── src/test/resources/fixtures/           # MQTT/API payload và dữ liệu test nhỏ
+│   ├── mvnw                                   # Maven Wrapper cho Linux/macOS/Pi
+│   ├── mvnw.cmd                               # Maven Wrapper cho Windows
+│   ├── pom.xml                                # Java 21, Boot 3.5.x và BOM quản lý dependency
+│   ├── Dockerfile                             # Chỉ thêm khi jar chạy độc lập ổn định
+│   └── README.md                              # Profile chạy, migration, test và API base URL
+├── frontend/                                  # React + TypeScript + Vite
 │   ├── src/
-│   │   ├── api/                       # Client REST và auth
-│   │   ├── pages/                     # Login, Overview, Footfall, Alerts, Settings
-│   │   ├── components/                # Charts, device status, stale/unknown
-│   │   └── main.tsx
-│   └── public/
-├── firmware/retail_alert/             # Arduino ESP32: LED/nút/MQTT/timeout
-├── contracts/                          # JSON Schema MQTT và OpenAPI dùng chung
+│   │   ├── app/                               # Bootstrap, provider, error boundary và global state
+│   │   ├── routes/                            # Route table và guard theo role
+│   │   ├── features/
+│   │   │   ├── auth/                          # Login, session và hết hạn token
+│   │   │   ├── overview/                      # KPI, freshness và sức khỏe thiết bị
+│   │   │   ├── footfall/                      # Biểu đồ giờ/ngày, coverage và CSV
+│   │   │   ├── alerts/                        # OPEN/ACK/END/INTERRUPTED và lịch sử
+│   │   │   ├── devices/                       # Trạng thái Pi/camera/ESP32
+│   │   │   └── settings/                      # Sửa ngưỡng và trạng thái áp dụng
+│   │   ├── shared/
+│   │   │   ├── api/                           # HTTP client, auth header và error mapping
+│   │   │   ├── components/                    # UI dùng lại; không chứa nghiệp vụ riêng
+│   │   │   ├── hooks/                         # Hooks dùng qua nhiều feature
+│   │   │   ├── types/                         # Kiểu dữ liệu dùng chung
+│   │   │   └── utils/                         # Format UTC/local time, số và CSV
+│   │   ├── assets/                            # Icon/ảnh tĩnh do source quản lý
+│   │   └── main.tsx                           # Entry React tối thiểu
+│   ├── public/                                # Tài nguyên copy nguyên trạng khi build
+│   ├── package.json                           # Script dev/build/test và dependency trực tiếp
+│   ├── vite.config.ts                         # Proxy API khi phát triển, không chứa secret
+│   └── README.md                              # Biến môi trường và quy trình build
+├── contracts/                                 # Hợp đồng liên tiến trình, độc lập ngôn ngữ
 │   ├── mqtt/
-│   └── openapi.yaml
-├── configs/
-│   └── examples/                       # site01-demo.yaml, site01-pi.yaml
+│   │   ├── events/                            # state, crossing, alert, ACK, storage ACK
+│   │   ├── commands/                          # settings set và settings result
+│   │   └── common/                            # Envelope, timestamp, ID và schema version
+│   ├── api/                                   # OpenAPI cho REST backend/frontend
+│   └── examples/                              # Payload hợp lệ dùng trong docs và contract test
+├── configs/                                   # Chỉ config mẫu; bí mật nằm ngoài Git
+│   ├── edge/                                  # Camera, model, ROI, threshold, spool và topic root
+│   ├── backend/                               # DB/MQTT/CORS/retention mẫu
+│   ├── broker/                                # Mosquitto listener, user và ACL mẫu
+│   └── examples/                              # Profile site01-demo và site01-pi
 ├── models/
-│   ├── source/                         # Trọng số nguồn như .pt
-│   └── exported/                       # NCNN theo model và input size
-├── data/                               # Video/ảnh nghiên cứu được phép dùng
-├── evaluation/                         # ground_truth, benchmarks, results
-├── tests/                              # integration và fixture liên thành phần
+│   ├── source/                                # Trọng số gốc và checksum; không commit file lớn
+│   ├── exported/                              # Mỗi backend/imgsz một thư mục riêng
+│   └── metadata/                              # Nguồn, giấy phép, classes và thông số export
+├── data/
+│   ├── raw/                                   # Video/ảnh gốc có quyền sử dụng; không commit
+│   ├── annotations/                           # Nhãn detection/crossing/queue/alert
+│   └── samples/                               # Mẫu nhỏ đã rà soát quyền riêng tư cho test
+├── evaluation/
+│   ├── scenarios/                             # Ma trận tình huống, điều kiện và expected outcome
+│   ├── ground_truth/                          # Nhãn tay đã khóa cho từng clip/buổi
+│   ├── benchmarks/                            # FPS, latency, RAM, nhiệt và độ đúng
+│   └── results/                               # Bảng/biểu kết quả gắn model và config version
+├── tests/                                     # Test xuyên ranh giới, không lặp unit test module
+│   ├── fixtures/
+│   │   ├── mqtt/                              # Payload hợp lệ, sai schema và trùng ID
+│   │   └── api/                               # Request/response và role cases
+│   ├── contract/                              # Kiểm Python/Java/ESP32 tuân schema chung
+│   ├── integration/                           # Broker → Spring → PostgreSQL → API
+│   └── system/                                # Camera/Pi → ESP32 → dashboard và failure recovery
 ├── deploy/
-│   ├── pi/systemd/retail-edge.service
-│   ├── pi/mosquitto/retail.conf
-│   └── server/                         # Compose/Dockerfile/hướng dẫn máy chủ
+│   ├── pi/
+│   │   ├── systemd/                           # Unit edge và chính sách restart
+│   │   ├── mosquitto/                         # Broker config, ACL và persistence
+│   │   └── scripts/                           # Cài/kiểm tra Pi có thể chạy lặp lại
+│   └── server/
+│       ├── compose.yaml                       # PostgreSQL, backend và frontend
+│       ├── scripts/                           # Backup, restore và health check
+│       └── README.md                          # Biến môi trường, startup và rollback
 ├── docs/
-│   ├── architecture.md
-│   ├── mqtt-topics.md                  # Topic, payload, app ACK, timeout
-│   ├── api-spec.md                     # REST + vai trò
-│   ├── data-schema.md                  # PostgreSQL, idempotency, giờ/ngày
-│   ├── hardware-setup.md
-│   ├── deployment-pi4.md
-│   ├── report/
-│   └── KE_HOACH_KHOI_TAO.md
-├── references/yolo_watchdog/           # URL/commit, reuse-map, giấy phép
-├── .env.example
-├── .gitignore
-└── README.md
+│   ├── architecture/                          # Sơ đồ khối, sequence và ranh giới triển khai
+│   ├── decisions/                             # ADR cho quyết định kỹ thuật quan trọng
+│   ├── operations/                            # Cài đặt, hiệu chuẩn, vận hành và xử lý sự cố
+│   ├── report/                                # Tài sản dùng viết báo cáo đồ án
+│   ├── implementation-checklist.md            # Thứ tự triển khai và definition of done
+│   ├── RetailVision_PRD.md                    # Yêu cầu sản phẩm và tiêu chí nghiệm thu
+│   └── TrienKhai.md                           # Kế hoạch kỹ thuật chi tiết này
+├── references/
+│   └── yolo_watchdog/                         # URL, commit, license và reuse-map; không chứa clone
+├── .env.example                               # Danh sách biến, chỉ dùng giá trị giả
+├── .gitignore                                 # Loại secret, runtime, raw data và model lớn
+└── README.md                                  # Tổng quan repo và điểm bắt đầu cho thành viên mới
 ```
 
-Giữ `models`, `data`, `evaluation` từ kế hoạch trước nhưng không dùng thêm `ai-model/`: trọng số nguồn đặt dưới `models/source/`, bản export đặt dưới `models/exported/<model>-<backend>-<imgsz>/`. File `.env`, thư mục dữ liệu gốc, spool runtime và model nặng không commit. `event_spool.py` chỉ lưu metadata chưa xác nhận với giới hạn rõ ràng; nếu đầy, báo mất coverage thay vì xóa im lặng. React không mở camera hoặc kết nối trực tiếp PostgreSQL. Backend là bên ghi database; Pi publish và đồng bộ lại bằng event ID/sequence. Nếu dashboard cần ảnh demo thì dùng preview của Pi có kiểm soát, không ghi video vào DB.
+Cấu trúc trên ưu tiên ranh giới trách nhiệm hơn số lượng file. Edge tách pipeline khỏi analytics và phục hồi. Backend giữ cách phân lớp `config/controller/domain/repository/service` quen thuộc từ repo SmartHomeIoT, nhưng chia package con theo nghiệp vụ để tránh mỗi lớp trở thành một thư mục phẳng quá lớn; riêng MQTT tách thành adapter thay vì đặt parse/routing/ghi DB trong lớp cấu hình. Frontend đặt logic theo feature và chỉ đưa phần thực sự dùng chung vào `shared/`. Khi một thư mục chỉ có một file nhỏ và chưa có khả năng phát triển độc lập, có thể giữ file ở cấp cha thay vì tạo thêm tầng.
 
-### 8.3 Phần tham khảo từ YOLO Watchdog
+Giữ `models`, `data`, `evaluation` tách biệt và không dùng thêm `ai-model/`: trọng số nguồn đặt dưới `models/source/`, bản export đặt dưới `models/exported/<model>-<backend>-<imgsz>/`. File `.env`, dữ liệu gốc, spool runtime và model nặng không commit. `event_spool.py` chỉ lưu metadata chưa xác nhận với giới hạn rõ ràng; nếu đầy, báo mất coverage thay vì xóa im lặng. React không mở camera hoặc kết nối trực tiếp PostgreSQL. Backend là bên ghi database; Pi publish và đồng bộ lại bằng event ID/sequence. Nếu dashboard cần ảnh demo thì dùng preview của Pi có kiểm soát, không ghi video vào DB.
+
+### 8.3 Nguồn tham khảo và phần cần điều chỉnh
+
+#### 8.3.1 Backend SmartHomeIoT
+
+Tham khảo [`trungKoiKa/SmartHomeIoT/backend`](https://github.com/trungKoiKa/SmartHomeIoT/tree/master/backend) cho bộ khung Spring Boot mà nhóm đã quen: Maven Wrapper, entrypoint ở package gốc, các lớp `config`, `controller`, `domain`, `repository`, `service` và `service/validator`. RetailVision giữ tinh thần phân lớp đó nhưng điều chỉnh theo kiến trúc mới:
+
+- giữ `config/controller/domain/repository/service`, Maven Wrapper và constructor injection;
+- chia controller, repository và service thành package con theo `auth`, `footfall`, `queue`, `alert`, `device`, `settings`, `report` để dễ tìm mà không chuyển hẳn sang kiến trúc nhiều module;
+- tách DTO request/response khỏi entity JPA; controller React API không bind hoặc trả entity trực tiếp;
+- `MqttConfiguration` chỉ tạo client/bean; callback, topic routing, payload validation và publish nằm trong `mqtt/`, còn transaction/idempotency/storage ACK nằm trong `service/ingestion/`;
+- dùng REST + JWT + React, PostgreSQL và Flyway; không mang `src/main/webapp`, JSP/JSTL, session form-login, MySQL hay upload avatar từ SmartHomeIoT sang;
+- bổ sung `exception`, `security`, `mapper`, test fixture và integration test vì repo tham khảo chưa bao phủ đầy đủ các phần này.
+
+#### 8.3.2 YOLO Watchdog
 
 | Nguồn tại commit 21b4d0a                                | Đích                                                                         | Mức kế thừa                                                                  |
 | ------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `src/image_processor/raspberry_pi_code.py`              | `edge/retailvision/capture.py`, `vision.py`                                  | Tham khảo đọc camera/detect; thay Serial và `/dev/`, thêm tracking và config |
-| `src/desktop_app/main_beta_app.py`                      | `edge/retailvision/geometry.py`, `overlay.py`                                | Học chia vùng/vẽ; sửa mốc 640×480 và ranh giới; bỏ GUI CUDA                  |
-| `src/image_processor/tools_check_yolo/fps_test_tool.py` | `evaluation/benchmark.py`                                                    | Học cách đo FPS, thêm đo toàn luồng và độ đúng                               |
+| `src/image_processor/raspberry_pi_code.py`              | `edge/retailvision/pipeline/capture.py`, `detector.py`, `tracker.py`          | Tham khảo đọc camera/detect; thay Serial và `/dev/`, thêm tracking và config |
+| `src/desktop_app/main_beta_app.py`                      | `edge/retailvision/analytics/geometry.py`, `presentation/overlay.py`          | Học chia vùng/vẽ; sửa mốc 640×480 và ranh giới; bỏ GUI CUDA                  |
+| `src/image_processor/tools_check_yolo/fps_test_tool.py` | `evaluation/benchmarks/`                                                     | Học cách đo FPS, thêm đo toàn luồng và độ đúng                               |
 | `src/alert_receiver/custom_remote_monitor/...`          | `firmware/retail_alert/`                                                     | Học thiết bị nhận; viết lại LED/nút/MQTT/ACK thay ESP-NOW                    |
-| Repo không có hệ thống bán lẻ tương ứng                 | `edge/retailvision/counting.py`, `queue_monitor.py`, `alerts.py`; `backend/`; `frontend/` | Tự xây dựng và đánh giá                                                      |
+| Repo không có hệ thống bán lẻ tương ứng                 | `edge/retailvision/analytics/`; các lớp nghiệp vụ backend và feature frontend | Tự xây dựng và đánh giá                                                      |
 
 Ghi nguồn/commit trong `references/yolo_watchdog/reuse-map.md` và giấy phép phù hợp khi dùng lại mã. Không mặc định model custom trong repo là lớp person, không lấy xoay camera theo người để làm tracking đếm khách.
 
@@ -459,15 +694,81 @@ Ghi nguồn/commit trong `references/yolo_watchdog/reuse-map.md` và giấy phé
 | React       | Xem số liệu, lịch sử, thay ngưỡng qua API                            | Hiện lỗi backend/stale, không giả lập số mới                          |
 | ESP32       | LED, timeout, nút ACK gửi MQTT                                       | Nếu mất broker thì vàng; ACK nhân viên về Pi theo event ID            |
 
-### 8.5 Tạo thư mục khởi đầu trên Windows
+### 8.5 Khung thư mục vật lý trên Windows
+
+Khung thư mục mục tiêu đã được tạo sẵn trong repository và dùng `.gitkeep` tại các thư mục lá chưa có nội dung để Git giữ được cấu trúc. Danh sách dưới đây dùng để kiểm tra hoặc phục hồi thư mục bị thiếu; mã nguồn, file cấu hình thật và dependency chỉ được tạo khi người triển khai bắt đầu giai đoạn tương ứng trong `docs/implementation-checklist.md`:
 
 ```powershell
 Set-Location "D:\DoAnHeThongNhungIoT-Ky9\RetailVision"
-@("edge/retailvision", "edge/experiments", "edge/tests", "backend", "frontend", "firmware/retail_alert", "contracts/mqtt", "configs/examples", "models/source", "models/exported", "data/raw", "evaluation/ground_truth", "evaluation/benchmarks", "evaluation/results", "tests/integration", "tests/fixtures", "deploy/pi/systemd", "deploy/pi/mosquitto", "deploy/server", "docs/report", "references/yolo_watchdog") | ForEach-Object { New-Item -ItemType Directory -Path $_ -Force | Out-Null }
-python -m venv edge/.venv
+$targetDirectories = @(
+  "edge/retailvision/core", "edge/retailvision/pipeline", "edge/retailvision/analytics",
+  "edge/retailvision/messaging", "edge/retailvision/resilience",
+  "edge/retailvision/presentation", "edge/retailvision/config",
+  "edge/experiments/camera", "edge/experiments/models", "edge/experiments/mqtt",
+  "edge/tests/unit", "edge/tests/integration", "edge/tests/fixtures",
+  "firmware/retail_alert/src", "firmware/retail_alert/include", "firmware/retail_alert/test",
+  "backend/.mvn/wrapper",
+  "backend/src/main/java/vn/retailvision/config",
+  "backend/src/main/java/vn/retailvision/controller/auth",
+  "backend/src/main/java/vn/retailvision/controller/dashboard",
+  "backend/src/main/java/vn/retailvision/controller/footfall",
+  "backend/src/main/java/vn/retailvision/controller/queue",
+  "backend/src/main/java/vn/retailvision/controller/alert",
+  "backend/src/main/java/vn/retailvision/controller/device",
+  "backend/src/main/java/vn/retailvision/controller/settings",
+  "backend/src/main/java/vn/retailvision/controller/report",
+  "backend/src/main/java/vn/retailvision/domain/entity",
+  "backend/src/main/java/vn/retailvision/domain/enums",
+  "backend/src/main/java/vn/retailvision/dto/request",
+  "backend/src/main/java/vn/retailvision/dto/response",
+  "backend/src/main/java/vn/retailvision/dto/mqtt",
+  "backend/src/main/java/vn/retailvision/repository/auth",
+  "backend/src/main/java/vn/retailvision/repository/monitoring",
+  "backend/src/main/java/vn/retailvision/repository/event",
+  "backend/src/main/java/vn/retailvision/repository/settings",
+  "backend/src/main/java/vn/retailvision/service/auth",
+  "backend/src/main/java/vn/retailvision/service/ingestion",
+  "backend/src/main/java/vn/retailvision/service/footfall",
+  "backend/src/main/java/vn/retailvision/service/queue",
+  "backend/src/main/java/vn/retailvision/service/alert",
+  "backend/src/main/java/vn/retailvision/service/device",
+  "backend/src/main/java/vn/retailvision/service/settings",
+  "backend/src/main/java/vn/retailvision/service/report",
+  "backend/src/main/java/vn/retailvision/service/validator",
+  "backend/src/main/java/vn/retailvision/mqtt",
+  "backend/src/main/java/vn/retailvision/security",
+  "backend/src/main/java/vn/retailvision/mapper",
+  "backend/src/main/java/vn/retailvision/exception",
+  "backend/src/main/java/vn/retailvision/util",
+  "backend/src/main/resources/db/migration",
+  "backend/src/test/java/vn/retailvision",
+  "backend/src/test/resources/fixtures",
+  "frontend/src/app", "frontend/src/routes", "frontend/src/assets",
+  "frontend/src/features/auth", "frontend/src/features/overview",
+  "frontend/src/features/footfall", "frontend/src/features/alerts",
+  "frontend/src/features/devices", "frontend/src/features/settings",
+  "frontend/src/shared/api", "frontend/src/shared/components",
+  "frontend/src/shared/hooks", "frontend/src/shared/types", "frontend/src/shared/utils",
+  "contracts/mqtt/events", "contracts/mqtt/commands", "contracts/mqtt/common",
+  "contracts/api", "contracts/examples",
+  "configs/edge", "configs/backend", "configs/broker", "configs/examples",
+  "models/source", "models/exported", "models/metadata",
+  "data/raw", "data/annotations", "data/samples",
+  "evaluation/scenarios", "evaluation/ground_truth",
+  "evaluation/benchmarks", "evaluation/results",
+  "tests/fixtures/mqtt", "tests/fixtures/api", "tests/contract",
+  "tests/integration", "tests/system",
+  "deploy/pi/systemd", "deploy/pi/mosquitto", "deploy/pi/scripts",
+  "deploy/server/scripts",
+  "docs/architecture", "docs/decisions", "docs/operations", "docs/report",
+  "references/yolo_watchdog"
+)
+$targetDirectories | ForEach-Object {
+  New-Item -ItemType Directory -Path $_ -Force | Out-Null
+}
 ```
 
-Cây Java/React được sinh hoặc cập nhật khi bắt đầu từng phần. Không tạo file rỗng hàng loạt. Giữ clone YOLO Watchdog ngoài repository để tham khảo; `references/yolo_watchdog/` chỉ lưu URL, commit, giấy phép và reuse map. App không phụ thuộc vào clone khi vận hành. Kế hoạch và điều kiện hoàn thành từng giai đoạn nằm trong `docs/KE_HOACH_KHOI_TAO.md`.
+Cây Java/React mới chỉ là khung package; các file `.java`, `.ts`, `.tsx`, Maven/Node và môi trường Python được người triển khai tạo sau. `deploy/server/compose.yaml` là file nên không nằm trong danh sách tạo thư mục và cũng chưa được tạo ở bước dựng khung. Giữ clone YOLO Watchdog ngoài repository để tham khảo; `references/yolo_watchdog/` chỉ lưu URL, commit, giấy phép và reuse map. App không phụ thuộc vào clone khi vận hành. Kế hoạch và điều kiện hoàn thành từng giai đoạn nằm trong `docs/implementation-checklist.md`.
 
 ### 8.6 Git và bí mật
 
@@ -492,14 +793,19 @@ Mật khẩu broker, PostgreSQL và bí mật phiên xác thực để ngoài re
 
 ### 8.7 Thứ tự triển khai theo mốc
 
-| Mốc | Kết quả                                                                  |
-| --- | ------------------------------------------------------------------------ |
-| A   | Python edge đọc camera, phát hiện/tracking, đo FPS trên Windows và Pi    |
-| B   | Đếm cửa và vùng chờ trên cùng frame; kiểm thử bằng clip gán nhãn         |
-| C   | Pi Mosquitto → ESP32 LED/ACK; máy chủ tắt vẫn cảnh báo                   |
-| D   | Spring Boot consume MQTT, PostgreSQL + Flyway, idempotent và storage ACK |
-| E   | React đăng nhập, dashboard, lịch sử, cấu hình qua Spring API             |
-| F   | Replay sau ngắt máy chủ, thử lỗi, benchmark Pi với hệ thống tích hợp     |
+Thứ tự chi tiết và Definition of Done nằm trong [`implementation-checklist.md`](./implementation-checklist.md). Giai đoạn 0 khóa contract trước; giai đoạn 1–2 chỉ dựng nền và một lát cắt nhỏ để giảm rủi ro tích hợp, chưa phải làm toàn bộ backend/frontend trước edge.
+
+| Giai đoạn | Kết quả bắt buộc |
+| --- | --- |
+| 0 | JSON Schema MQTT, OpenAPI tối thiểu, quy tắc ID/timezone/idempotency và baseline phiên bản |
+| 1 | PostgreSQL + Flyway tạo schema crossing từ database rỗng |
+| 2 | Bản tin crossing giả → Mosquitto → Spring Boot → PostgreSQL → REST API → React hiển thị một lượt vào |
+| 3 | Edge thay publisher giả bằng crossing từ camera/model/tracker trên Pi |
+| 4 | ESP32 nhận state, timeout UNKNOWN và gửi ACK đúng event |
+| 5 | Backend hoàn thiện queue/alert/device/settings/report/auth |
+| 6 | Frontend hoàn thiện màn hình MVP bằng API thật |
+| 7 | Replay, failure test, benchmark và coverage gap |
+| 8 | systemd, ACL, `deploy/server/compose.yaml`, backup/restore và khóa bản demo |
 
 ## 9. Cấu hình camera và thuật toán
 
@@ -593,14 +899,14 @@ Mosquitto chạy trên Pi, ví dụ IP LAN `192.168.1.60` (IP minh họa). Pytho
 | `retail/site01/cam01/event`                                 | Pi → Spring            | event_id, OPEN/END/INTERRUPTED, thời gian, state                                                   |
 | `retail/site01/cam01/telemetry`                             | Pi → Spring            | số người hợp lệ, timestamp, coverage/status; lấy mẫu 1 giây lúc đầu                                |
 | `retail/site01/node01/ack`                                  | ESP32 → Pi, Spring     | event_id, device_id, ack_id, received_at (do Pi/server ghi đáng tin nếu đồng hồ node chưa đồng bộ) |
-| `retail/site01/cam01/config/set`                            | Spring → Pi            | request_id, expected_config_version, ngưỡng mới                                                    |
-| `retail/site01/cam01/config/result`                         | Pi → Spring            | request_id, applied/rejected, config_version, reason                                               |
+| `retail/site01/cam01/settings/set`                          | Spring → Pi            | request_id, expected_settings_revision, ngưỡng mới                                                 |
+| `retail/site01/cam01/settings/result`                       | Pi → Spring            | request_id, applied/rejected, settings_revision, config_version, reason                            |
 | `retail/site01/cam01/storage/ack`                           | Spring → Pi            | event_id hoặc session_id + seq sau khi DB commit thành công                                        |
 | `retail/site01/cam01/status`, `retail/site01/node01/status` | Pi/ESP32 → Spring      | heartbeat, boot/session, phiên bản, freshness                                                      |
 
-Mỗi client có username/ACL riêng: `edge01`, `node01`, `backend01`; React dùng HTTP đến Spring, không cấp tài khoản MQTT trình duyệt. Ghi hợp đồng JSON và phiên bản schema trong `docs/mqtt-topics.md`; kiểm kiểu/trường/độ dài, không tin payload từ mạng. QoS 1 có thể giao lại: khóa unique `event_id` hoặc `(session_id, seq, kind)` trong DB, Spring xử lý idempotent. **MQTT PUBACK chỉ xác nhận tầng broker**; Pi giữ bản ghi spool cho đến khi Spring commit và gửi storage ACK. Test broker crash giữa chừng, ACK trùng, replay ngược thứ tự và spool đầy.
+Mỗi client có username/ACL riêng: `edge01`, `node01`, `backend01`; React dùng HTTP đến Spring, không cấp tài khoản MQTT trình duyệt. Ghi topic và quy tắc giao thức trong `docs/architecture/mqtt-topics.md`; JSON Schema có phiên bản nằm trong `contracts/mqtt/`. Kiểm kiểu/trường/độ dài, không tin payload từ mạng. QoS 1 có thể giao lại: khóa unique `event_id` hoặc `(session_id, seq, kind)` trong DB, Spring xử lý idempotent. **MQTT PUBACK chỉ xác nhận tầng broker**; Pi giữ bản ghi spool cho đến khi Spring commit và gửi storage ACK. Test broker crash giữa chừng, ACK trùng, replay ngược thứ tự và spool đầy.
 
-ESP32 khởi động ở UNKNOWN; state quá 5 giây theo đồng hồ node thì trở về UNKNOWN. Không bật retain cho trạng thái tức thời nếu chưa có cơ chế kiểm freshness/session phù hợp. Pi tiếp tục tính cảnh báo trên camera khi Spring/PostgreSQL tạm không có mặt; nếu MQTT broker/Pi chết, ESP32 báo mất liên lạc. `config/set` phải có phản hồi để web chỉ hiển thị “đã áp dụng” khi edge xác nhận; quản lý không được đổi hình học camera từ web trong MVP.
+ESP32 khởi động ở UNKNOWN; state quá 5 giây theo đồng hồ node thì trở về UNKNOWN. Không bật retain cho trạng thái tức thời nếu chưa có cơ chế kiểm freshness/session phù hợp. Pi tiếp tục tính cảnh báo trên camera khi Spring/PostgreSQL tạm không có mặt; nếu MQTT broker/Pi chết, ESP32 báo mất liên lạc. `settings/set` phải có phản hồi để web chỉ hiển thị “đã áp dụng” khi edge xác nhận; quản lý không được đổi hình học camera từ web trong MVP.
 
 Mẫu broker cấu hình `listener 1883` trong LAN kiểm soát được, xác thực và ACL riêng; không mở cổng này ra Internet. Mạng cửa hàng thật cần cô lập mạng hoặc TLS theo cấu hình thực tế. Lưu log broker, kiểm tra topic bằng `mosquitto_pub/sub` trước khi ghép camera.
 
@@ -629,7 +935,7 @@ Pi chỉ giữ **spool JSONL có giới hạn** của metadata chưa được se
 
 ### 12.2 Spring Boot backend
 
-Java 21, Spring Boot, Spring Web, Spring Data JPA, Spring Security (JWT ngắn hạn và phân quyền ADMIN/MANAGER), MQTT client Java và Flyway. MQTT consumer chuẩn hóa dữ liệu rồi ghi PostgreSQL trong transaction; chỉ publish storage ACK khi ghi thành công. REST API tối thiểu: `POST /api/auth/login`, `GET /api/dashboard/overview`, `GET /api/footfall?from=&to=`, `GET /api/alerts`, `GET /api/devices`, `GET /api/config`, `PUT /api/config`, `GET /api/reports/export.csv`. `PUT /api/config` trả PENDING, rồi APPLIED/REJECTED sau phản hồi Pi (request_id); không xem HTTP 200 là bằng chứng edge đã thay ngưỡng. Hai vai trò ADMIN/MANAGER được kiểm tra ở backend; React ẩn nút chỉ là trải nghiệm giao diện.
+Java 21, Spring Boot, Spring Web, Spring Data JPA, Spring Security (JWT ngắn hạn và phân quyền ADMIN/MANAGER), MQTT client Java và Flyway. MQTT consumer chuẩn hóa dữ liệu rồi ghi PostgreSQL trong transaction; chỉ publish storage ACK khi ghi thành công. REST API tối thiểu: `POST /api/auth/login`, `GET /api/dashboard/overview`, `GET /api/footfall?from=&to=`, `GET /api/alerts`, `GET /api/devices`, `GET /api/settings`, `PUT /api/settings`, `GET /api/reports/export.csv`. `PUT /api/settings` trả PENDING, rồi APPLIED/REJECTED sau phản hồi Pi (`request_id`); không xem HTTP 200 là bằng chứng edge đã thay ngưỡng. Hai vai trò ADMIN/MANAGER được kiểm tra ở backend; React ẩn nút chỉ là trải nghiệm giao diện.
 
 ### 12.3 React dashboard
 
@@ -688,7 +994,7 @@ Chế độ vận hành chỉ lưu số liệu và sự kiện; không lưu ản
 4. Mở web từ laptop, đăng nhập vai trò quản lý, thử crossing rồi thử vùng chờ đông.
 5. Tắt Spring/PostgreSQL hoặc ngắt mạng máy chủ để thử Pi + ESP32 độc lập; kiểm spool. Bật lại máy chủ để thử replay chống trùng và báo cáo bù.
 
-Lúc phát triển có thể khởi động Python edge từ thư mục `edge` bằng `python -m retailvision.main --config ../configs/site01.yaml` sau khi viết parser; Spring và React có lệnh chạy riêng trong `backend/README.md`, `frontend/README.md`. Các lệnh này là giao diện mục tiêu, chưa phải chương trình đã lập trình.
+Lúc phát triển có thể khởi động Python edge từ thư mục `edge` bằng `python -m retailvision.app --config ../configs/examples/site01-demo.yaml` sau khi viết parser; Spring và React có lệnh chạy riêng trong `backend/README.md`, `frontend/README.md`. Các lệnh này là giao diện mục tiêu, chưa phải chương trình đã lập trình.
 
 ### 14.2 Chống trễ tích lũy
 
@@ -734,7 +1040,7 @@ Capture có frame mới nhất trong bộ đệm hữu hạn, lưu timestamp, kh
 
 | Chỉ số                       | Mục tiêu ban đầu                                                                                                               | Cách đo                                                                                  |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| Tốc độ xử lý live            | Sau khi chốt Pi 4: đề xuất thử ≥3 FPS toàn luồng, chưa được bảo đảm; cần thống nhất tiêu chí cuối với giảng viên theo mục 24.8 | Số frame xử lý / thời gian tường; báo thêm độ dao động                                   |
+| Tốc độ xử lý live            | Sau khi chốt Pi 4: đề xuất thử ≥3 FPS toàn luồng, chưa được bảo đảm; cần thống nhất tiêu chí cuối với giảng viên theo mục 21.8 | Số frame xử lý / thời gian tường; báo thêm độ dao động                                   |
 | Độ trễ phần mềm              | p95 ≤1 giây khi tải bình thường                                                                                                | Từ đọc frame về ứng dụng đến state cập nhật; ghi rõ chưa bao gồm mọi buffer camera       |
 | Trễ state đến LED            | Mục tiêu ≤1 giây trong LAN                                                                                                     | Log/ack thiết bị và quan sát LED; không dùng camera timestamp khác clock mà chưa đồng bộ |
 | Sai số lượt vào/ra           | Tổng sai số tuyệt đối theo clip / tổng lượt thật ≤10%                                                                          | Tính riêng hai chiều, có clip zero-count riêng                                           |
@@ -762,13 +1068,9 @@ Kiểm tra báo cáo bằng dữ liệu biết trước: lượt ở hai phía r
 
 Đạt kỹ thuật không tự chứng minh giảm thời gian chờ. Pilot vận hành ghi thời điểm nhân viên thực sự đến hỗ trợ bằng quan sát thủ công nếu cần, tách khỏi ack; so sánh ca có lưu lượng/nhân sự tương đương và công bố số mẫu. Nếu chỉ thử lab, kết luận là nguyên mẫu khả thi trong điều kiện đo, chưa khẳng định hiệu quả thương mại.
 
-## 16. Kế hoạch 10 tuần
+## 16. Kịch bản kiểm thử và demo
 
-Bản người dùng đã bỏ bảng phân bổ tuần. Chưa chốt lại tiến độ; trước mắt thực hiện theo các mốc A–E ở mục 8.7 và lập `docs/implementation-checklist.md`. Chỉ gán thời hạn khi xác định nhân lực, lịch bảo vệ và thời gian có thiết bị.
-
-## 17. Kịch bản kiểm thử và demo
-
-### 17.1 Các test cần lưu kết quả
+### 16.1 Các test cần lưu kết quả
 
 | ID  | Kịch bản                                                 | Mong đợi                                                   |
 | --- | -------------------------------------------------------- | ---------------------------------------------------------- |
@@ -786,7 +1088,7 @@ Bản người dùng đã bỏ bảng phân bổ tuần. Chưa chốt lại ti�
 | T12 | Dừng broker                                              | Camera vẫn đếm/lưu; node vàng                              |
 | T13 | Tắt WAN, giữ Wi-Fi/LAN                                   | Lõi vẫn chạy                                               |
 | T14 | Restart edge                                             | Session mới, không nhầm ID cũ                              |
-| T15 | Phát trùng event/config request                          | Không ghi trùng hoặc áp cấu hình hai lần                   |
+| T15 | Phát trùng event/settings request                        | Không ghi trùng hoặc áp ngưỡng hai lần                     |
 | T16 | Gửi `off_count >= on_count`                              | Từ chối, giữ cấu hình hợp lệ                               |
 | T17 | Cắm lại camera/khởi động broker                          | Tự phục hồi hoặc log rõ lý do chưa phục hồi                |
 | T18 | Chạy dài + refresh dashboard nhiều lần                   | Không mở nhiều camera/model, không tăng RAM vô hạn         |
@@ -798,7 +1100,7 @@ Bản người dùng đã bỏ bảng phân bổ tuần. Chưa chốt lại ti�
 
 CSV kết quả ghi: test_id, thời gian, phiên bản, người kiểm tra, đầu vào, mong đợi, thực tế, pass/fail, đường dẫn bằng chứng. Với test tự động, dùng chuỗi vị trí/timestamp tổng hợp cho counting và alerts; test camera/mạng/mạch cần kiểm tra tích hợp thực.
 
-### 17.2 Kịch bản bảo vệ 7–10 phút
+### 16.2 Kịch bản bảo vệ 7–10 phút
 
 1. Nêu hai nhu cầu: xem lưu lượng để chuẩn bị nhân sự và gọi hỗ trợ khi vùng chờ đông kéo dài; giới thiệu phạm vi một cửa/một vùng.
 2. Chỉ camera, edge/broker trên Pi, ESP32, máy chủ Spring/PostgreSQL và React dashboard.
@@ -808,11 +1110,11 @@ CSV kết quả ghi: test_id, thời gian, phiên bản, người kiểm tra, đ
 6. Ngắt Internet chứng minh edge; rút camera chứng minh lỗi không thành số 0.
 7. Mở báo cáo lượt theo giờ/coverage, lịch sử tiếp nhận và bảng MAE/precision/recall/FPS đã đo trên Pi; dữ liệu mô phỏng phải gắn nhãn.
 
-Nếu không có 5 người trong ngày demo, dùng profile demo tại mục 2.4 (ngưỡng 2/1, giữ bật 10 giây, giữ tắt 5 giây), hiển thị rõ cấu hình demo khác cấu hình test. Video dự phòng phải ghi “video phát lại”, không trình bày như camera live. Chuẩn bị trọng số và package trước để không cần tải mạng lúc bảo vệ.
+Nếu không có 5 người trong ngày demo, dùng profile demo tại mục 2.3 (ngưỡng 2/1, giữ bật 10 giây, giữ tắt 5 giây), hiển thị rõ cấu hình demo khác cấu hình test. Video dự phòng phải ghi “video phát lại”, không trình bày như camera live. Chuẩn bị trọng số và package trước để không cần tải mạng lúc bảo vệ.
 
-## 18. Thử nghiệm tại cửa hàng
+## 17. Thử nghiệm tại cửa hàng
 
-### 18.1 Các bước pilot
+### 17.1 Các bước pilot
 
 **Khảo sát:** xác nhận người dùng báo cáo lưu lượng, người nhận hỗ trợ, mặt bằng đáp ứng một camera nhìn chéo thấy rõ cửa và vùng chờ, ánh sáng, quyền đặt camera và quay thử. Nếu không có người phản ứng với đèn, chỉ thêm cảnh báo không giải quyết được vấn đề vận hành.
 
@@ -824,17 +1126,17 @@ Nếu không có 5 người trong ngày demo, dùng profile demo tại mục 2.4
 
 **Đánh giá:** đối chiếu báo cáo lượt theo giờ/ngày và coverage; hỏi quản lý số liệu có dùng được để tham khảo bố trí ca không. Tiếp theo so số lần vùng chờ đông được phát hiện đúng, số cảnh báo sai, thời gian từ cảnh báo đến xác nhận và phản hồi nhân viên. Nếu so trước/sau, cần các ca tương đồng và ghi yếu tố nhiễu như lưu lượng/nhân sự; không gán mọi thay đổi cho hệ thống.
 
-### 18.2 Vận hành hằng ngày
+### 17.2 Vận hành hằng ngày
 
 Đầu ca kiểm tra tuổi dữ liệu, camera lệch hay không, đi thử một lượt, kiểm tra LED. Trong ca xem cảnh báo lỗi, không chỉ số người. Cuối ca xuất thống kê qua Spring, backup PostgreSQL trên máy chủ và spool Pi khi cần, xem log. Khi camera bị di chuyển phải cấu hình lại ROI/vạch và chạy kiểm thử ngắn.
 
 Giai đoạn pilot: tắt sleep cho máy chủ web trong giờ chạy; Pi tự khởi động edge/Mosquitto bằng systemd, máy chủ tự khởi động PostgreSQL/Spring/React theo cách đã chọn. Nếu máy chủ là laptop demo, tắt laptop sẽ làm web tạm vắng và kích hoạt kịch bản replay, nhưng Pi/ESP32 còn chạy khi LAN của chúng còn.
 
-### 18.3 Điều kiện trước khi triển khai lâu dài
+### 17.3 Điều kiện trước khi triển khai lâu dài
 
 Có máy edge dành riêng, khởi động/phục hồi tự động đã thử, mạng và tài khoản hạn chế quyền, backup và retention, người phụ trách xử lý lỗi, cách cập nhật/rollback model và cấu hình. Kiểm tra giấy phép thư viện/model trước khi phân phối thương mại; YOLOv8 có các lựa chọn giấy phép được nêu trong [tài liệu Ultralytics](https://docs.ultralytics.com/models/yolov8/). Pilot của đồ án chưa đồng nghĩa sản phẩm thương mại sẵn sàng.
 
-## 19. Rủi ro và phương án thu gọn
+## 18. Rủi ro và phương án thu gọn
 
 | Rủi ro                                      | Dấu hiệu                          | Xử lý ưu tiên                                                          |
 | ------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------- |
@@ -849,7 +1151,7 @@ Có máy edge dành riêng, khởi động/phục hồi tự động đã thử,
 
 Nếu chỉ còn 4–6 tuần: giữ React tối thiểu gồm đăng nhập, overview, báo cáo/cảnh báo và cấu hình; bỏ heatmap, fine-tune không cần thiết, cloud và OTA; giữ hai chức năng đếm cửa/báo cáo và vùng chờ/gọi hỗ trợ. Nếu không đủ thời gian đạt cả hai, ghi nhận phần chưa hoàn thành và trao đổi phạm vi với giảng viên, không tự đổi mục tiêu nghiệm thu. Không bỏ trạng thái UNKNOWN, phép đo hoặc test offline vì đó là các yếu tố chứng minh chất lượng hệ thống.
 
-## 20. Sản phẩm bàn giao và báo cáo
+## 19. Sản phẩm bàn giao và báo cáo
 
 | Sản phẩm             | Nội dung tối thiểu                                                                              |
 | -------------------- | ----------------------------------------------------------------------------------------------- |
@@ -867,7 +1169,7 @@ Khung báo cáo thống nhất với đề cương ở đầu file: Chương 1 t
 
 Câu trả lời khi bảo vệ: “Đồ án dùng mô hình phát hiện có sẵn; đóng góp là thiết kế và kiểm chứng hệ thống IoT xử lý tại biên, từ một góc camera đến báo cáo lưu lượng và yêu cầu hỗ trợ tại vị trí khác, có khả năng làm việc offline và nhận biết trạng thái lỗi.”
 
-## 21. Việc cần làm trong 7 ngày tới
+## 20. Việc cần làm trong 7 ngày tới
 
 | Ngày | Việc cụ thể                                                 | Sản phẩm cuối ngày                              |
 | ---- | ----------------------------------------------------------- | ----------------------------------------------- |
@@ -881,33 +1183,9 @@ Câu trả lời khi bảo vệ: “Đồ án dùng mô hình phát hiện có s
 
 Chưa cần train trong tuần này. Ba thông tin cần điền để tinh chỉnh kế hoạch là phần cứng Pi đã có hay chưa, ngân sách toàn bộ bộ Pi và thời hạn nộp. Hướng trình diễn đã chuyển sang Pi; vẫn có thể học và viết code trên Windows trong khi chuẩn bị thiết bị.
 
-## 22. Thuật ngữ và tài liệu tham khảo
+## 21. Triển khai Pi 4 và máy chủ web LAN
 
-### 22.1 Thuật ngữ
-
-| Thuật ngữ         | Nghĩa trong đồ án                                               |
-| ----------------- | --------------------------------------------------------------- |
-| Problem statement | Mô tả ai gặp vấn đề, vấn đề gì và phạm vi cần giải quyết        |
-| Baseline          | Phiên bản đầu để làm mốc so sánh                                |
-| Inference         | Dùng model đã học để dự đoán ảnh mới                            |
-| Bounding box      | Khung bao đối tượng                                             |
-| ROI               | Vùng quan tâm trong ảnh                                         |
-| Tracking          | Nối các quan sát theo thời gian bằng ID tạm                     |
-| Edge              | Xử lý tại nơi thu thập dữ liệu                                  |
-| MQTT broker       | Máy chủ chuyển bản tin theo topic                               |
-| Retain            | Broker giữ bản tin cuối của topic để gửi cho subscriber mới     |
-| LWT               | Bản tin broker phát khi phát hiện client mất kết nối bất thường |
-| Hysteresis        | Ngưỡng bật và tắt khác nhau để giảm dao động                    |
-| Ground truth      | Nhãn/số liệu đối chiếu do người kiểm tra tạo                    |
-| MAE               | Sai số tuyệt đối trung bình                                     |
-| Precision sự kiện | Trong các cảnh báo đã phát, tỷ lệ cảnh báo đúng                 |
-| Recall sự kiện    | Trong các sự kiện thật, tỷ lệ được phát hiện                    |
-| p95               | Mức mà khoảng 95% mẫu đo không vượt quá                         |
-| Pilot             | Thử nghiệm có giới hạn ở môi trường thực                        |
-
-## 24. Triển khai Pi 4 và máy chủ web LAN
-
-### 24.1 Quyết định kiến trúc và cách trình bày đồ án
+### 21.1 Quyết định kiến trúc và cách trình bày đồ án
 
 Pi 4 4 GB thực sự xử lý camera, suy luận và vận hành broker MQTT. ESP32 nhận trạng thái ở vị trí nhân viên; máy chủ LAN chạy Spring Boot + PostgreSQL + React (laptop chỉ là máy chủ demo). Nếu tắt laptop, Pi/ESP32 vẫn đếm/cảnh báo và giữ metadata chưa được commit vào PostgreSQL để bù khi laptop bật lại; web không truy cập được trong lúc laptop tắt. Không dùng FPS máy chủ làm FPS của Pi.
 
@@ -918,9 +1196,9 @@ Pi 4 4 GB thực sự xử lý camera, suy luận và vận hành broker MQTT. E
 | Laptop/máy chủ LAN | Spring Boot, PostgreSQL, React; quản lý và báo cáo                   |
 | Router             | LAN giữa Pi, ESP32 và máy chủ; có thể không cần WAN                  |
 
-### 24.2 Bộ phần cứng đã chốt: Pi 4
+### 21.2 Bộ phần cứng đã chốt: Pi 4
 
-**Cấu hình triển khai:** Raspberry Pi 4 Model B **4 GB**, nguồn USB-C **5,1 V/3 A** chất lượng tốt, tản nhiệt kèm quạt đúng loại Pi 4, microSD **32 hoặc 64 GB**, webcam USB UVC và bộ ESP32 mô tả ở mục 4.1; bảng đấu nối cần hoàn thiện trong `docs/hardware-setup.md`. Không yêu cầu mua Pi 5 hoặc bản 8 GB. Chưa có benchmark của hệ thống để bảo đảm FPS hay mức dùng RAM cuối cùng.
+**Cấu hình triển khai:** Raspberry Pi 4 Model B **4 GB**, nguồn USB-C **5,1 V/3 A** chất lượng tốt, tản nhiệt kèm quạt đúng loại Pi 4, microSD **32 hoặc 64 GB**, webcam USB UVC và bộ ESP32 mô tả ở mục 4.1; bảng đấu nối cần hoàn thiện trong `docs/operations/hardware-setup.md`. Không yêu cầu mua Pi 5 hoặc bản 8 GB. Chưa có benchmark của hệ thống để bảo đảm FPS hay mức dùng RAM cuối cùng.
 
 | Hạng mục                                             | Số lượng    | Lý do/chú ý                                                                  |
 | ---------------------------------------------------- | ----------- | ---------------------------------------------------------------------------- |
@@ -931,7 +1209,7 @@ Pi 4 4 GB thực sự xử lý camera, suy luận và vận hành broker MQTT. E
 | Case Pi 4 có thông gió                               | 1           | Khớp bo và bộ tản nhiệt                                                      |
 | Webcam USB UVC                                       | 1           | Khảo sát 1280×720 nếu hỗ trợ; chọn góc nhìn/độ nét đủ cho cả cửa và vùng chờ |
 | Ethernet và router/AP                                | 1 bộ        | Ưu tiên Pi nối dây, ESP32 nối Wi-Fi 2,4 GHz                                  |
-| ESP32 + LED/nút/điện trở                             | 1 bộ        | Theo mục 4.1 và `docs/hardware-setup.md`                                     |
+| ESP32 + LED/nút/điện trở                             | 1 bộ        | Theo mục 4.1 và `docs/operations/hardware-setup.md`                          |
 | Micro-HDMI/keyboard/mouse                            | Tùy nhu cầu | Không bắt buộc khi dùng SSH; laptop mở dashboard                             |
 
 Pi 4 có cổng USB và Gigabit Ethernet, phù hợp luồng camera/mạng này. [Thông tin Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/) Nguồn chính hãng 15 W cho Pi 4 cung cấp 5,1 V/3 A; không cần lấy bộ nguồn Pi 5 làm yêu cầu mua bắt buộc. [Thông số nguồn](https://www.raspberrypi.com/products/type-c-power-supply/)
@@ -940,7 +1218,7 @@ Pi 4 có cổng USB và Gigabit Ethernet, phù hợp luồng camera/mạng này.
 
 Webcam USB là lựa chọn chính. Camera CSI chỉ thêm khi cần và phải dùng cáp/driver phù hợp Pi 4; chưa cần mua AI Camera. Không cắm nguồn Pi và dây cấp nguồn khác vào GPIO đồng thời.
 
-### 24.3 Hướng chạy YOLO trên Pi 4: CPU và NCNN
+### 21.3 Hướng chạy YOLO trên Pi 4: CPU và NCNN
 
 Chạy **một model YOLOv8n, một camera, một tiến trình suy luận**. Dùng `.pt` để kiểm tra chức năng rồi thử NCNN với đầu vào **320×320**. Nếu người quá nhỏ/bị bỏ sót, thử 416 hoặc 640 và đo lại; không ép giảm ảnh khi độ chính xác không còn đạt.
 
@@ -954,9 +1232,9 @@ Ultralytics hướng dẫn chạy YOLO trên Raspberry Pi và xuất NCNN. Các 
 
 Để giữ ngân sách và giảm tải: dùng Raspberry Pi OS Lite 64-bit khi trình diễn và tắt preview ảnh. React trên máy chủ truy vấn Spring API mỗi 2–5 giây và giới hạn khoảng báo cáo. Không chạy thêm trình duyệt/IDE trên Pi. Vẫn giữ MQTT state mỗi giây nhưng phải đánh dấu tuổi frame; phát bản tin nhanh không biến dữ liệu hình ảnh cũ thành dữ liệu mới.
 
-**Không cam kết 10 FPS trên Pi 4.** Mốc kỹ thuật đề xuất ban đầu là thử đạt ít nhất 3 FPS toàn luồng ổn định trong cảnh kiểm soát, đồng thời đo sai số đếm và độ trễ. Đây là mục tiêu để thảo luận với giảng viên, không phải FPS được bảo đảm. Chỉ đạt 3 FPS chưa đủ kết luận đáp ứng thực tế; người đi nhanh hoặc che nhau vẫn có thể làm tracking sai. Quyết định phạm vi cuối theo mục 24.8–24.9.
+**Không cam kết 10 FPS trên Pi 4.** Mốc kỹ thuật đề xuất ban đầu là thử đạt ít nhất 3 FPS toàn luồng ổn định trong cảnh kiểm soát, đồng thời đo sai số đếm và độ trễ. Đây là mục tiêu để thảo luận với giảng viên, không phải FPS được bảo đảm. Chỉ đạt 3 FPS chưa đủ kết luận đáp ứng thực tế; người đi nhanh hoặc che nhau vẫn có thể làm tracking sai. Quyết định phạm vi cuối theo mục 21.8–21.9.
 
-### 24.4 Lắp Pi và cài hệ điều hành
+### 21.4 Lắp Pi và cài hệ điều hành
 
 1. Ngắt nguồn, lắp tản nhiệt và quạt/case fan dành cho Pi 4 theo sơ đồ nhà sản xuất; không dùng đầu nối quạt chuyên dụng của Pi 5. Không đoán chân nguồn quạt. Lắp case và chừa đường thoát gió.
 2. Trên Windows, dùng Raspberry Pi Imager chọn Raspberry Pi 4 và **Raspberry Pi OS Lite 64-bit** cho cấu hình gọn. Có thể học bằng Desktop trước, nhưng lúc benchmark phải ghi đúng OS và dịch vụ đang chạy.
@@ -986,7 +1264,7 @@ sudo reboot
 
 Kiểm tra `uname -m` là `aarch64`. Sau reboot đăng nhập lại. Ghi lại tên image OS, Python và phiên bản package trong báo cáo. Đối chiếu wheel Python/ARM64 và OS trước khi cài thư viện; không trộn môi trường Python của Windows với Pi.
 
-### 24.5 Chuyển code từ Windows và thử camera/model
+### 21.5 Chuyển code từ Windows và thử camera/model
 
 Chỉ chuyển code, config mẫu và model; không chuyển `.venv`, mật khẩu thật, cache hay DB đang mở. Có thể dùng Git repository của mình hoặc SCP. Trên Pi đồng bộ dự án đầy đủ rồi tạo môi trường cho edge:
 
@@ -999,7 +1277,7 @@ edge/.venv/bin/python -m pip install --upgrade pip
 edge/.venv/bin/python -m pip install -r edge/requirements.txt
 edge/.venv/bin/python -m pip check
 cd edge
-.venv/bin/python -m retailvision.main --config ../configs/examples/site01-pi.yaml --check-config
+.venv/bin/python -m retailvision.app --config ../configs/examples/site01-pi.yaml --check-config
 cd ..
 v4l2-ctl --list-devices
 ```
@@ -1046,7 +1324,7 @@ Sau khi đã chạy thành công:
 edge/.venv/bin/python -m pip freeze > edge/requirements.pi.lock.txt
 ```
 
-### 24.6 Cấu hình broker Pi và triển khai Spring/PostgreSQL/React trên máy chủ
+### 21.6 Cấu hình broker Pi và triển khai Spring/PostgreSQL/React trên máy chủ
 
 Trên Pi cài Mosquitto, tạo `edge01`, `node01`, `backend01` với password riêng. Cấu hình listener LAN 1883, `allow_anonymous false`, password_file/acl_file tại `/etc/mosquitto/`; ACL chỉ cấp topic tương ứng mục 10. Khởi động bằng `systemctl`, kiểm tra publish/subscribe giữa Pi, ESP32 và backend bằng dữ liệu giả. Chỉ đặt broker trên Pi; không khởi động thêm broker Windows cùng topic/IP lúc demo.
 
@@ -1054,13 +1332,13 @@ Máy chủ LAN (laptop demo) chạy PostgreSQL với volume và backup, Spring B
 
 Thử tắt máy chủ một cách có kiểm soát rồi kiểm Pi/ESP32 còn cảnh báo; bật lại, kiểm số crossing và ACK không nhân đôi, gap thực vẫn hiển thị. Thử bản tin MQTT giả trước khi ghép camera. Khóa và ghi phiên bản Java/Node/PostgreSQL sau khi chạy thành công, không suy rằng những dòng trên là lệnh deploy đã kiểm chứng.
 
-### 24.7 Điều chỉnh code và cấu hình khi chuyển sang Pi
+### 21.7 Điều chỉnh code và cấu hình khi chuyển sang Pi
 
 | Thành phần                         | Điều chỉnh                                                               |
 | ---------------------------------- | ------------------------------------------------------------------------ |
 | `configs/examples/site01-pi.yaml`  | Đúng camera Linux, model, broker 127.0.0.1, spool path có giới hạn       |
-| `edge/retailvision/main.py`        | Chạy headless, không gọi `imshow`, camera/model/tracker một lần          |
-| `edge/retailvision/event_spool.py` | Ghi metadata chưa ACK; replay sau khi Spring commit; kiểm overflow       |
+| `edge/retailvision/app.py`                    | Chạy headless, không gọi `imshow`, camera/model/tracker một lần    |
+| `edge/retailvision/resilience/event_spool.py` | Ghi metadata chưa ACK; replay sau commit; kiểm overflow            |
 | `backend`                          | Subscribe broker Pi IP LAN; Flyway migration; unique key; storage ACK    |
 | `frontend`                         | API origin đúng máy chủ LAN; đăng nhập và trạng thái stale               |
 | `firmware`                         | Broker IP Pi; ACK theo event_id; node UNKNOWN khi state timeout          |
@@ -1068,7 +1346,7 @@ Thử tắt máy chủ một cách có kiểm soát rồi kiểm Pi/ESP32 còn c
 
 Đường dẫn và cấu hình trên phải được kiểm tra trên phần cứng; chuyển code không chuyển `.venv` hoặc mật khẩu thật.
 
-### 24.8 Đo hiệu năng và giới hạn vận hành trên Pi 4
+### 21.8 Đo hiệu năng và giới hạn vận hành trên Pi 4
 
 | Lần thử | Phần cứng/backend            | Đầu vào model | Phải ghi                                        |
 | ------- | ---------------------------- | ------------- | ----------------------------------------------- |
@@ -1093,7 +1371,7 @@ vcgencmd get_throttled
 
 Ở 3 FPS, khoảng cách giữa hai lần suy luận xấp xỉ 0,33 giây, chưa kể dao động. Nếu người đi qua vùng quyết định chỉ trong một khoảng ngắn hơn, có thể không đủ quan sát để đếm ổn định. Đây là lý do cần vùng quan sát đủ rộng và test người đi nhanh, không chỉ diễn chậm để có demo đẹp. Timeout camera phải theo thời điểm capture mới, không nhầm inference lâu thành camera mất nếu capture vẫn hoạt động; tuổi dữ liệu phân tích là chỉ số riêng.
 
-### 24.9 Khi Pi 4 chạy chậm: giữ bo, tối ưu và thu gọn có bằng chứng
+### 21.9 Khi Pi 4 chạy chậm: giữ bo, tối ưu và thu gọn có bằng chứng
 
 **Không dùng AI HAT+ của kế hoạch Pi 5 trên Pi 4 Model B.** AI HAT+ được thiết kế cho Pi 5 và kết nối theo phần cứng tương ứng; không phải phụ kiện cắm thẳng vào Pi 4. Vì vậy đã bỏ BOM HAT, lệnh `hailo-all` và hướng dẫn PCIe của bản trước. [Tài liệu Raspberry Pi AI HAT](https://www.raspberrypi.com/documentation/accessories/ai-hat-plus.html)
 
@@ -1108,7 +1386,7 @@ Thứ tự xử lý:
 
 Một Pi chạy được một script YOLO chưa chứng minh sản phẩm đủ realtime. Không có yêu cầu mua thêm phần cứng tăng tốc trong phiên bản này. Bất kỳ phụ kiện tăng tốc khác nào cũng là nghiên cứu mới về tương thích và ngân sách, chưa nằm trong kế hoạch đã chốt.
 
-### 24.10 Tự khởi động và vận hành headless
+### 21.10 Tự khởi động và vận hành headless
 
 Chỉ cấu hình service khi lệnh chạy tay đã ổn, parser hỗ trợ `--headless`, thư mục runtime có quyền ghi và code xử lý camera/reconnect. Ví dụ tạo `/etc/systemd/system/retail-edge.service`:
 
@@ -1124,7 +1402,7 @@ User=rv
 SupplementaryGroups=video
 WorkingDirectory=/home/rv/RetailVision/edge
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/home/rv/RetailVision/edge/.venv/bin/python -m retailvision.main --config ../configs/examples/site01-pi.yaml --headless
+ExecStart=/home/rv/RetailVision/edge/.venv/bin/python -m retailvision.app --config ../configs/examples/site01-pi.yaml --headless
 Restart=on-failure
 RestartSec=5
 
