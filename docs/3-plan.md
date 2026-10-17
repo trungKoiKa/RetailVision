@@ -1,0 +1,123 @@
+# 3. Kế hoạch và tiến độ
+
+Tài liệu trả lời: làm gì trước, đang ở đâu. Mỗi phần chỉ đánh dấu khi có bằng chứng (log, test, video, số đo) và chỉ chuyển phần khi đạt gate. Mã test T01–T26 xem [evaluation/README.md](../evaluation/README.md).
+
+**Nguyên tắc thứ tự:** làm trước vòng Camera → Pi → ESP32 vì nó chạy được không cần máy chủ và là trọng tâm của đồ án nhúng; backend/frontend làm sau. Phần 1 chạy song song với phần 2–4.
+
+**Quỹ thời gian tham khảo:** ~110 giờ (8–10 giờ/tuần). MVP = hết phần 7.
+
+## Phần 0 — Chốt quyết định
+
+- [x] ADR-0001; tài liệu gộp còn 3 file.
+- [ ] Hỏi giảng viên ngưỡng nghiệm thu, nhóm/cá nhân, hạn nộp (OQ-03, OQ-07).
+
+## Phần 1 — Smoke test Pi (~4 giờ)
+
+- [ ] Ghi Pi/OS/Python/camera/nguồn thực tế.
+- [ ] Đọc frame qua SSH; YOLOv8n detect person; `track(persist=True)` trên stream liên tục.
+- [ ] Đo FPS, RAM, nhiệt, throttling → `evaluation/benchmarks/`.
+- [ ] chrony đồng bộ với máy chủ LAN khi không có Internet.
+- [ ] Dependency chặn >2 giờ → thử Bookworm trên thẻ khác, ghi lại.
+
+**Gate:** model + tracking chạy trên Pi thật, có số đo.
+
+## Phần 2 — Contract (~4 giờ)
+
+- [ ] JSON Schema trong `contracts/mqtt/` theo [bảng topic](../contracts/mqtt/README.md).
+- [ ] Ví dụ hợp lệ/sai/trùng trong `contracts/examples/`, script validate.
+
+**Gate:** ví dụ hợp lệ qua, ví dụ sai bị từ chối.
+
+## Phần 3 — Analytics thuần (~8 giờ)
+
+- [ ] `core/clock.py`, `geometry.py`, `crossing.py`, `queue.py`, `alert_state.py`.
+- [ ] Unit test bằng tọa độ/clock giả: T01–T10, T14, T16, T23.
+
+**Gate:** `pytest` xanh; analytics không import OpenCV/Ultralytics.
+
+## Phần 4 — Pipeline edge và công cụ (~8 giờ)
+
+- [ ] Loader YAML + validation.
+- [ ] Capture camera/file video, frame mới nhất, timestamp video khi replay, reconnect.
+- [ ] Detector/tracker/runner, tọa độ về frame gốc.
+- [ ] `tools/calibrate.py`; preview MJPEG có công tắc.
+- [ ] Log FPS và tuổi frame; cùng clip chạy hai lần cùng kết quả.
+
+**Gate:** đếm cửa và vùng chờ đúng trên video quay sẵn.
+
+## Phần 5 — MQTT và ESP32: demo lõi (~10 giờ)
+
+- [ ] Mosquitto: tài khoản, ACL, persistence, giới hạn hàng đợi (`deploy/pi/mosquitto/`).
+- [ ] Edge publish `state`/sự kiện/`status`, nhận `operator-ack`; `tools/fake_publisher.py`.
+- [ ] Firmware: LED, còi, nút debounce, 4 trạng thái, timeout 5 giây, gửi lại ACK.
+- [ ] Bảng chân GPIO trong `firmware/retail_alert/README.md`.
+- [ ] T12, T17, T24.
+
+**Gate:** camera → đỏ + còi → ACK → còi tắt, đỏ giữ → giảm người → xanh, **không cần máy chủ**.
+
+## Phần 6 — Backend lát cắt (~8 giờ)
+
+- [ ] Spring Boot + Flyway V001–V003, `ddl-auto=validate`.
+- [ ] Paho `cleanSession=false`, manual ack sau commit; dedupe `event_id`.
+- [ ] `GET /api/overview`, `/alerts`, `/devices`, `/health`.
+- [ ] T15; lỗi DB → không ack, broker gửi lại.
+
+**Gate:** sự kiện thật từ Pi vào DB đúng một lần.
+
+## Phần 7 — Frontend lát cắt (~6 giờ)
+
+- [ ] Vite + React + TS, proxy `/api`.
+- [ ] Overview polling 2 giây: IN/OUT, queue/state, tuổi dữ liệu, alert, thiết bị; UNKNOWN không hiện 0.
+
+**Gate:** web hiện dữ liệu thật. **MVP `v0.1.0`.**
+
+## Phần 8 — Triển khai Pi và benchmark (~8 giờ)
+
+- [ ] `.pt` 320, NCNN 320, NCNN 416 trên cùng clip/Pi.
+- [ ] Chỉnh tracker theo FPS thật.
+- [ ] FPS toàn luồng, tuổi frame, RAM, nhiệt khi chạy kèm broker.
+- [ ] systemd; reboot tự chạy lại.
+
+**Gate:** bảng benchmark tái hiện được.
+
+## Phần 9 — Phục hồi lỗi (~6 giờ)
+
+- [ ] T11, T13, T18, T25, T26.
+- [ ] Mất/nhân đôi dữ liệu ở T25 → ghi kết quả, viết ADR bổ sung outbox trên edge.
+
+**Gate:** mọi kịch bản phục hồi được hoặc báo lỗi rõ.
+
+## Phần 10 — Nghiệp vụ web (~10 giờ)
+
+- [ ] V004, đăng nhập session, CSRF, ADMIN/MANAGER kiểm ở API.
+- [ ] Báo cáo giờ/ngày, coverage, gap; alerts phân trang; CSV (T21).
+- [ ] (P1) Settings: V005, PENDING/APPLIED/REJECTED, revision cũ không ghi đè.
+- [ ] (P1) OLED.
+
+**Gate:** báo cáo không biến thiếu dữ liệu thành 0; gọi thẳng API sai quyền bị chặn.
+
+## Phần 11 — Đánh giá (~12 giờ)
+
+- [ ] Thu clip có đồng ý, tách dev/test theo buổi; gán nhãn.
+- [ ] Đo theo [evaluation/README.md](../evaluation/README.md); ghi số thật kể cả khi không đạt.
+
+**Gate:** kết quả trên tập test độc lập.
+
+## Phần 12 — Đóng gói (~8 giờ)
+
+- [ ] Compose máy chủ, secret ngoài source, backup/restore đã thử.
+- [ ] CI: unit edge, validate contract, build backend/frontend.
+- [ ] README quickstart từ clone sạch; chạy thử được bằng video + fake publisher khi không có Pi.
+- [ ] Video demo 3–5 phút.
+
+**Gate:** người khác tái hiện được.
+
+## Khi thiếu thời gian
+
+Cắt theo thứ tự: settings web → CSV → vai trò MANAGER → NCNN 416 → OLED. Không cắt: UNKNOWN, chống trùng, đo trên Pi thật, test offline.
+
+## Nhật ký
+
+| Ngày | Phần/task | Kết quả, bằng chứng | Blocker | Tiếp theo |
+| --- | --- | --- | --- | --- |
+| 2026-10-17 | 0 | ADR-0001, gộp tài liệu | — | Phần 1 + 2 |

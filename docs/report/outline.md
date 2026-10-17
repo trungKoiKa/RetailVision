@@ -1,58 +1,10 @@
-# KẾ HOẠCH TRIỂN KHAI ĐỒ ÁN
+# Đề cương báo cáo đồ án
 
-**Định hướng:** Máy tính nhúng xử lý một camera và chạy Mosquitto; ESP32 nhận cảnh báo qua MQTT; Web dashboard có đầy đủ backend + frontend + cơ sở dữ liệu trên máy chủ LAN.  
-**Tên đề tài:** “Thiết kế hệ thống giám sát lưu lượng khách ứng dụng thị giác máy tính tại biên”.
+Tài liệu phục vụ viết báo cáo, không thuộc luồng đọc của dev. Nội dung kỹ thuật lấy từ `docs/1-requirements.md` và `docs/2-design.md`.
 
-**Mục đích:** cung cấp dữ liệu để quản lý tham khảo bố trí nhân sự theo giờ và yêu cầu hỗ trợ khi vùng chờ đông kéo dài. Pi tiếp tục giám sát/cảnh báo khi máy chủ web tạm ngắt; báo cáo sẽ bù dữ liệu theo sự kiện đã lưu trên Pi khi máy chủ trở lại.
-
----
-
-## 1. Bài toán
-
-### Bối cảnh và lý do hình thành đề tài
-
-Để đánh giá hoạt động một điểm bán, người quản lý cần phân biệt ba câu hỏi: có bao nhiêu lượt người đến, hoạt động mua hàng tạo ra kết quả gì, và khu vực phục vụ có đáp ứng được nhu cầu tại từng thời điểm hay không. Dữ liệu hóa đơn mô tả giao dịch phát sinh; chỉ có hóa đơn thì chưa biết đầy đủ những lượt ghé không mua hàng hoặc khách đến vào lúc nào trước khi thanh toán. Ngược lại, số người qua cửa không cho biết họ có mua hàng hay đang phải chờ tại quầy.
-
-Phương án đề xuất: camera được dùng để tạo hai loại thông tin bổ sung: lưu lượng qua cửa theo thời gian và tình trạng hiện diện tại vùng chờ. Báo cáo lưu lượng giúp người quản lý có cơ sở xem lại cách bố trí ca; cảnh báo vùng chờ cung cấp tín hiệu để kiểm tra trong ca. Giá trị cần hướng đến là đưa số liệu vào một quyết định vận hành cụ thể, thay vì chỉ hiển thị bộ đếm hoặc bật đèn khi ảnh có nhiều người. Nhận biết giờ đông để bố trí nhân sự; kết hợp heatmap để xem phân bố khách; so sánh lưu lượng giữa các điểm bán.
-
-## 2. Đề xuất triển khai
-
-### Tóm tắt
-
-RetailVision là hệ thống IoT hỗ trợ điểm bán nhận biết lưu lượng khách theo giờ và tình trạng vùng chờ thanh toán. Camera USB kết nối Raspberry Pi; Pi xử lý hình ảnh tại chỗ, theo dõi người tạm thời, ghi nhận lượt qua một cửa và phát hiện vùng chờ đông đủ lâu. ESP32 đặt ở vị trí nhân viên hỗ trợ hiển thị yêu cầu và cho phép xác nhận đã nhận. Web React cho quản lý xem báo cáo và quản trị hệ thống; Spring Boot lưu dữ liệu đã nhận qua MQTT vào PostgreSQL trên máy chủ LAN.
-
-### 2.2 Giá trị và kết quả mong muốn
-
-- Quản lý xem giờ có lưu lượng cao với phần thời gian quan sát hợp lệ để tham khảo bố trí ca.
-- Người ở vị trí khác quầy nhận yêu cầu kiểm tra khi vùng chờ đông kéo dài và xác nhận đã nhận.
-- Khi máy chủ web tạm tắt, Pi và ESP32 tiếp tục cảnh báo qua broker trên Pi; các sự kiện chưa được ghi PostgreSQL được broker giữ trong hàng đợi persistent session và bù khi máy chủ hoạt động trở lại, trong giới hạn hàng đợi đã công bố.
-- Báo cáo phân biệt số lượt qua cửa, số người đang được tính trong vùng chờ.
-
-### 2.3 Vai trò
-
-<table class="markdown-table">
-  <tr><th>Vai trò</th><th>Công việc và quyền trong MVP</th></tr>
-  <tr><td>Quản lý cửa hàng (MANAGER)</td><td>Đăng nhập, xem trạng thái/báo cáo/lịch sử, xuất CSV, đề xuất thay ngưỡng được phép trong site của mình</td></tr>
-  <tr><td>Quản trị hệ thống (ADMIN)</td><td>Quản lý tài khoản, thiết bị, cấu hình hệ thống và xem trạng thái dữ liệu</td></tr>
-  <tr><td>Nhân viên hỗ trợ</td><td>Nhận tín hiệu trên ESP32, bấm nút ACK đúng sự kiện; không cần tài khoản web ở MVP</td></tr>
-  <tr><td>Pi edge / ESP32 / Spring backend</td><td>Tác nhân hệ thống dùng danh tính MQTT khác nhau; không phải người dùng web</td></tr>
-</table>
-
-## 3. Vấn đề và cơ hội
-
-### 3.1 Phát biểu vấn đề
-
-Một điểm bán có thể thiếu số liệu đáng tin về lượt đến theo giờ để xem lại việc bố trí nhân sự; nhân viên ở vị trí khác cũng có thể không nhận biết kịp tình trạng đông kéo dài tại quầy. Hóa đơn không ghi được mọi lượt đến, còn đếm người trong một ảnh không thể tự suy ra lượt khách ra/vào. Hệ thống cần đo đúng hai loại thông tin và đưa cảnh báo đến người có thể hỗ trợ, trong điều kiện một góc camera quan sát được cả cửa và vùng chờ.
-
-### 3.2 Giả thuyết cần kiểm chứng
-
-Nếu hệ thống đo được lượt qua cửa theo hướng và vùng chờ đông kéo dài với sai số có thể chấp nhận, người quản lý có cơ sở xem lại giờ cao điểm và người nhận cảnh báo có thể biết lúc nào cần kiểm tra.
-
-### 3.3 Khó khăn của nhóm
+## Khó khăn khi thu dữ liệu
 
 Một khó khăn lớn của đề tài là thu thập dữ liệu thực tế tại cửa hàng tiện lợi hoặc siêu thị. Camera tại các địa điểm này thường liên quan đến quyền riêng tư của khách hàng, quy định nội bộ và sự đồng ý của đơn vị vận hành, nên nhóm khó có thể tự quay hoặc lấy video để làm dữ liệu huấn luyện/đánh giá. Ngoài ra, dữ liệu cần có nhiều tình huống như đông người, che khuất, ánh sáng khác nhau, khách đi sát nhau hoặc đứng lâu tại quầy, trong khi việc thu thập đủ các tình huống này cần nhiều thời gian và sự phối hợp từ cửa hàng. Vì vậy, đồ án có thể phải bắt đầu bằng dữ liệu mô phỏng hoặc quay trong môi trường được cho phép, đồng thời nêu rõ giới hạn rằng kết quả chỉ phản ánh điều kiện thử nghiệm, chưa đại diện hoàn toàn cho mọi cửa hàng thực tế
-
-## ĐỀ CƯƠNG VÀ MỤC LỤC BÁO CÁO ĐỒ ÁN
 
 **Tên đề tài:** Thiết kế hệ thống giám sát lưu lượng khách ứng dụng thị giác máy tính tại biên.
 
