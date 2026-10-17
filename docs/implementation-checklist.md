@@ -1,137 +1,163 @@
-# Checklist khởi tạo RetailVision
+# RetailVision — Checklist triển khai từng phần
 
-Tài liệu này quy định thứ tự triển khai và điều kiện hoàn thành của từng giai đoạn. Mục tiêu là khóa sớm các giao diện giữa các tiến trình, chứng minh một lát cắt xuyên suốt bằng dữ liệu giả, rồi mới mở rộng lần lượt edge, firmware, backend và frontend. Không chuyển sang giai đoạn kế tiếp chỉ vì đã tạo đủ thư mục; phải có bằng chứng chạy hoặc kiểm thử tương ứng.
+Cập nhật: 2026-10-17 theo [ADR-0001](decisions/0001-hop-nhat-quyet-dinh-ky-thuat.md). Nhật ký tiến độ và mốc thời gian: [personal-project-roadmap.md](personal-project-roadmap.md). Tất cả mục dưới đây **chưa được nghiệm thu**, trừ phần 0.
 
-## Giai đoạn 0 — Chốt hợp đồng và baseline công nghệ
+Thứ tự theo ADR-0001 D10: làm trước vòng **Camera → Pi → ESP32** (chạy được không cần máy chủ), sau đó mới tới backend/frontend. Tận dụng skeleton, không tạo class rỗng cho đủ cây. Chỉ đánh dấu khi có bằng chứng.
 
-Mục tiêu: Python edge, ESP32, Spring Boot và React cùng dựa trên một ngôn ngữ dữ liệu trước khi viết nghiệp vụ.
+## Cách sử dụng
 
-- [ ] Chốt topic MQTT, chiều publish/subscribe, QoS, retain, ACL và quy tắc wildcard.
-- [ ] Chốt envelope chung: `schema_version`, `event_id`, `session_id`, `seq`, `occurred_at`, `site_id`, `camera_id`.
-- [ ] Viết JSON Schema cho `crossing`, `queue_state`, `alert`, `alert_ack`, `storage_ack`, `heartbeat`, `settings_set` và `settings_result` trong `contracts/mqtt/`.
-- [ ] Tạo payload hợp lệ, payload sai schema và payload trùng ID trong `contracts/examples/`.
-- [ ] Chốt OpenAPI tối thiểu cho login và API đọc một crossing trong `contracts/api/`.
-- [ ] Chốt mô hình dữ liệu ban đầu và quy tắc idempotency: unique `event_id` hoặc khóa nghiệp vụ đã định nghĩa rõ.
-- [ ] Chốt UTC ở dữ liệu gốc, `Asia/Ho_Chi_Minh` chỉ dùng khi hiển thị/tổng hợp.
-- [ ] Ghi baseline phiên bản tại mục 7.1 của `TrienKhai.md`; sinh lockfile hoặc wrapper khi khởi tạo từng module.
+1. Chọn một task ở phần hiện tại, khoảng 1–3 giờ.
+2. Triển khai, kiểm tra, ghi log/test/video hoặc kết quả đo.
+3. Đánh dấu nếu đạt; ghi blocker nếu chưa đạt.
+4. Chỉ chuyển phần sau khi đạt gate. Phần 1 (Pi) có thể chạy song song với phần 2–4 trên laptop.
 
-Điều kiện hoàn thành: schema có phiên bản; ví dụ payload qua validation; quy tắc tương thích ngược và xử lý trường không biết đã được ghi; không còn tên trường cùng nghĩa nhưng khác nhau giữa tài liệu.
+Ước lượng giờ chỉ để tham khảo; ghi từng buổi trong [nhật ký roadmap](personal-project-roadmap.md#7-nhật-ký-tiến-độ).
 
-## Giai đoạn 1 — Nền backend: PostgreSQL và Flyway
+## Phần 0 — Chốt quyết định
 
-Mục tiêu: tạo đường ghi dữ liệu nhỏ nhất trước khi xây toàn bộ API.
+- [x] ADR-0001 hợp nhất firmware, auth, bù dữ liệu, topic, lược đồ DB, đồng bộ giờ, ngưỡng nghiệm thu.
+- [x] PRD 0.2, `TrienKhai.md` và checklist này sửa theo ADR.
+- [ ] Hỏi giảng viên: ngưỡng FPS/độ đúng nghiệm thu, đồ án nhóm hay cá nhân, hạn nộp (PRD OQ-03, OQ-07).
 
-- [ ] Khởi tạo Maven Wrapper và Spring Boot theo cây backend tại mục 8.2 của `TrienKhai.md`.
-- [ ] Tạo `V001__baseline.sql` cho site, camera, session và crossing; chưa tạo toàn bộ schema tương lai trong một migration lớn.
-- [ ] Cấu hình PostgreSQL và Flyway; dùng `ddl-auto=validate`, không dùng Hibernate tự tạo schema.
-- [ ] Thêm unique constraint phục vụ QoS 1/replay và index cho truy vấn crossing theo camera/thời gian.
-- [ ] Viết test migration từ database rỗng và test insert trùng `event_id`.
-- [ ] Đưa PostgreSQL vào `deploy/server/compose.yaml`; backend có thể chạy ngoài container trong giai đoạn này.
+**Gate:** chỉ còn một đặc tả cho mỗi giao diện.
 
-Điều kiện hoàn thành: một lệnh dựng được PostgreSQL rỗng, Flyway áp migration thành công và chạy lại không làm thay đổi schema ngoài dự kiến.
+## Phần 1 — Smoke test Pi (~4 giờ, song song)
 
-## Giai đoạn 2 — Lát cắt crossing end-to-end
+- [ ] Ghi Pi/OS/Python/camera/nguồn/tản nhiệt thực tế.
+- [ ] Đọc frame thật bằng OpenCV qua SSH (không `imshow`).
+- [ ] Tạo `edge/.venv`; YOLOv8n detect class person; `model.track(..., persist=True)` trên stream liên tục.
+- [ ] Đo FPS inference, RAM, nhiệt, `vcgencmd get_throttled`; lưu vào `evaluation/benchmarks/`.
+- [ ] Cài chrony, trỏ NTP về máy chủ LAN; `chronyc tracking` báo đồng bộ khi không có Internet.
+- [ ] Nếu dependency chặn >2 giờ: fallback Bookworm 64-bit trên thẻ khác, ghi quyết định.
 
-Mục tiêu: chứng minh sớm đường tích hợp quan trọng nhất bằng đúng hợp đồng thật, chưa phụ thuộc camera hoặc model.
+**Gate:** model + tracking chạy trên Pi thật, có số đo; chưa cần tốc độ cuối.
 
-```text
-Bản tin crossing giả
-→ Mosquitto
-→ Spring Boot
-→ PostgreSQL
-→ REST API
-→ React hiển thị một lượt vào
-```
+## Phần 2 — Contract (~4 giờ)
 
-- [ ] Chạy Mosquitto và publish payload `crossing` mẫu từ `contracts/examples/`.
-- [ ] Spring subscribe, validate schema, chống trùng và commit crossing trong transaction.
-- [ ] Chỉ publish `storage_ack` sau khi transaction đã commit.
-- [ ] Cung cấp `GET /api/footfall/recent` hoặc endpoint tối thiểu tương đương theo OpenAPI.
-- [ ] React gọi API thật và hiển thị một lượt `IN`; không dùng mock sau khi lát cắt đã nối xong.
-- [ ] Tạo integration test cho broker → backend → PostgreSQL → API.
+- [ ] `docs/architecture/mqtt-topics.md` theo bảng ADR-0001 D4 (topic, publisher/subscriber, QoS/retain, ACL).
+- [ ] JSON Schema trong `contracts/mqtt/`: envelope chung, `state`, `events/crossing`, `events/alert`, `telemetry`, `status`, `operator-ack`, `settings/set`, `settings/result`.
+- [ ] Ví dụ hợp lệ/sai/trùng trong `contracts/examples/`; script validate chạy được.
+- [ ] Quy ước UTC, `Asia/Ho_Chi_Minh` khi hiển thị, `queue_count=null` khi UNKNOWN, `seq` chỉ so trong cùng session.
 
-Điều kiện hoàn thành: một payload hợp lệ xuất hiện đúng một lần trên React; phát lại cùng `event_id` không tăng dữ liệu; payload sai schema không được ghi và không nhận storage ACK.
+**Gate:** mọi ví dụ hợp lệ qua schema, ví dụ sai bị từ chối.
 
-## Giai đoạn 3 — Edge và bằng chứng khả thi trên Pi
+## Phần 3 — Analytics thuần (~8 giờ, laptop)
 
-Mục tiêu: thay bản tin giả bằng crossing thật từ một pipeline camera/model/tracker chạy được trên Pi.
+- [ ] `core/types.py`, `core/clock.py` (clock thay thế được).
+- [ ] `analytics/geometry.py`: tọa độ chuẩn hóa → pixel, đoạn vạch hữu hạn, point-in-polygon.
+- [ ] `analytics/crossing.py`: bottom-center, deadband, `min_stable_observations`, IN/OUT, xóa track hết hạn.
+- [ ] `analytics/queue.py`: dwell, chỉ đếm track có quan sát mới.
+- [ ] `analytics/alert_state.py`: NORMAL/OVERLOAD/UNKNOWN, on/off count, hold, reset timer, `alert_id`, END reason NORMALIZED/INTERRUPTED/CONFIG_CHANGED, xử lý ACK theo `alert_id`.
+- [ ] Unit test bằng chuỗi tọa độ/clock giả cho T01–T10, T14, T16, T23 (không cần camera/YOLO).
 
-- [ ] Hoàn thiện parser và validation cho camera, model, ROI, MQTT và spool.
-- [ ] Capture giữ frame mới nhất, timestamp và reconnect; không tích lũy hàng chờ video.
-- [ ] Adapter vision trả bbox/track ID theo tọa độ frame gốc.
-- [ ] Crossing, queue dwell, alert hysteresis và UNKNOWN là state machine có unit test, không phụ thuộc camera.
-- [ ] Publish event theo contract; spool có giới hạn và chỉ xóa sau storage ACK.
-- [ ] Đo `.pt` và NCNN bằng cùng clip gán nhãn trên đúng Pi 4.
+**Gate:** `pytest edge/tests/unit` xanh; analytics không import OpenCV/Ultralytics.
 
-Điều kiện hoàn thành: edge chạy headless trên Pi; một pipeline dùng chung cho cửa và vùng chờ; bản tin crossing thật thay được publisher giả mà backend/frontend không phải đổi contract; có log FPS, freshness, RAM và nhiệt độ.
+## Phần 4 — Pipeline edge và công cụ (~8 giờ)
 
-## Giai đoạn 4 — Firmware ESP32
+- [ ] `config/loader.py` + `validation.py`: đường dẫn tương đối theo file YAML, kiểm `off_count < on_count`.
+- [ ] `pipeline/capture.py`: camera hoặc file video; giữ frame mới nhất; timestamp video khi replay; reconnect.
+- [ ] `pipeline/detector.py`, `tracker.py`, `runner.py`: một lần suy luận mỗi frame, tọa độ về frame gốc.
+- [ ] `tools/calibrate.py`: click vạch/đa giác trên frame, xuất YAML chuẩn hóa.
+- [ ] Preview MJPEG có công tắc, chỉ dùng hiệu chuẩn/demo.
+- [ ] Log FPS capture/xử lý và tuổi frame.
+- [ ] Cùng một clip chạy hai lần cho cùng kết quả đếm (FR-13).
 
-Mục tiêu: thiết bị vật lý nhận đúng trạng thái và xác nhận đúng sự kiện qua contract đã khóa.
+**Gate:** đếm IN/OUT và queue đúng trên video quay sẵn, chạy được trên laptop và Pi.
 
-- [ ] Chốt chân LED/nút và tạo bảng đấu nối.
-- [ ] Kết nối Wi-Fi/MQTT bằng tài khoản `node01` có ACL tối thiểu.
-- [ ] Hiện thực UNKNOWN/NORMAL/OVERLOAD_UNACKED/ACKED và timeout về UNKNOWN.
-- [ ] Chống dội nút; ACK chứa `ack_id`, `event_id`, `device_id` và timestamp.
-- [ ] Test reconnect, bản tin lặp, ACK sai event và mất broker.
+## Phần 5 — MQTT và ESP32: demo lõi (~10 giờ)
 
-Điều kiện hoàn thành: LED phản ánh đúng state; ACK lặp không gây hiệu ứng lặp; dữ liệu quá hạn chuyển UNKNOWN trong thời gian cấu hình.
+- [ ] Mosquitto trên Pi: tài khoản `edge01`/`node01`/`backend01`, ACL, `persistence true`, giới hạn hàng đợi; mẫu tại `deploy/pi/mosquitto/`.
+- [ ] `messaging/`: publish `state` 1 Hz (QoS 0), sự kiện QoS 1, `status` retained + Last Will; subscribe `node01/events/operator-ack`.
+- [ ] `tools/fake_publisher.py` phát state/sự kiện theo contract.
+- [ ] Firmware PlatformIO + Arduino-ESP32 + PubSubClient + ArduinoJson; `secrets.h` không commit.
+- [ ] Đấu LED đỏ/xanh/vàng, còi qua transistor, nút; bảng chân trong `docs/operations/hardware-setup.md`.
+- [ ] Máy trạng thái UNKNOWN/NORMAL/OVERLOAD_UNACKED/OVERLOAD_ACKED theo `state` + `acked`; timeout 5 giây.
+- [ ] Debounce; ACK theo `alert_id`, gửi lại cùng `ack_id` mỗi 1 giây tới khi `acked=true` (tối đa 10 lần).
+- [ ] Pi bỏ ACK lặp/sai alert; ACK không đóng OVERLOAD; còi tắt sau ACK.
+- [ ] Test mất Wi-Fi/broker và reconnect không chặn LED/nút (T12, T17, T24).
 
-## Giai đoạn 5 — Hoàn thiện backend theo nghiệp vụ
+**Gate:** camera → OVERLOAD → đèn đỏ + còi → bấm ACK → còi tắt, đỏ giữ → giảm người → END, **không cần máy chủ**.
 
-Mục tiêu: mở rộng lát cắt crossing thành backend MVP, không phá hợp đồng đã chạy.
+## Phần 6 — Backend lát cắt (~8 giờ)
 
-- [ ] Mở rộng Flyway theo migration nhỏ cho device status, queue sample, alert, ACK và settings.
-- [ ] Hoàn thiện ingestion cho mọi payload MQTT và storage ACK sau commit.
-- [ ] Thêm login/JWT và kiểm quyền ADMIN/MANAGER tại API.
-- [ ] Tạo API overview, footfall, alerts, devices, settings và CSV.
-- [ ] Xử lý vòng đời settings PENDING/APPLIED/REJECTED bằng `request_id`.
-- [ ] Test timezone, replay, QoS 1 duplicate, coverage gap và transaction rollback.
+- [ ] Spring Boot 3.5 / Java 21 / Maven Wrapper: Web, Validation, JPA, PostgreSQL, Flyway, Paho.
+- [ ] `V001__crossing.sql`, `V002__alerts.sql`, `V003__monitoring.sql`; `ddl-auto=validate`; test migration từ DB rỗng.
+- [ ] MQTT client `cleanSession=false`, client-id `backend01`, `setManualAcks(true)`.
+- [ ] Ingestion: validate → dedupe theo `event_id` → commit → `messageArrivedComplete`; payload sai không lưu; trùng vẫn ack.
+- [ ] Lưu `server_received_at`; cập nhật `device_status` từ `status`.
+- [ ] `GET /api/overview`, `/api/alerts`, `/api/devices`, `/api/health`.
+- [ ] Test: bản tin trùng → một bản ghi (T15); lỗi DB → không ack, broker gửi lại.
 
-Điều kiện hoàn thành: migration chạy từ database rỗng; restart/replay không nhân đôi dữ liệu; API trái quyền bị từ chối; báo cáo giữ UNKNOWN/gap thay vì đổi thành 0.
+**Gate:** crossing/alert thật từ Pi vào DB đúng một lần.
 
-## Giai đoạn 6 — Hoàn thiện frontend
+## Phần 7 — Frontend lát cắt (~6 giờ)
 
-Mục tiêu: thay màn hình lát cắt bằng giao diện MVP sử dụng toàn bộ API thật.
+- [ ] Vite + React + TypeScript, dev proxy `/api` (cùng origin).
+- [ ] Trang Overview polling 2 giây: IN/OUT hôm nay, queue/state, tuổi dữ liệu, alert gần nhất, trạng thái thiết bị.
+- [ ] UNKNOWN/stale hiển thị rõ, không hiện 0.
 
-- [ ] Tạo login và lớp API/auth dùng chung.
-- [ ] Overview hiển thị freshness của camera, Pi, ESP32 và backend.
-- [ ] Footfall theo giờ/ngày kèm coverage và CSV.
-- [ ] Alerts hiển thị OPEN/ACK/END/INTERRUPTED.
-- [ ] Devices/Settings hiển thị PENDING/APPLIED/REJECTED.
-- [ ] Bổ sung loading, empty, error, stale và unauthorized state.
+**Gate:** web hiển thị dữ liệu thật từ Pi qua Spring/PostgreSQL. Đây là MVP `v0.1.0` (chưa login/báo cáo/settings).
 
-Điều kiện hoàn thành: không còn dữ liệu mock trong nghiệm thu; frontend không truy cập MQTT/PostgreSQL; refresh và token hết hạn được xử lý rõ ràng.
+## Phần 8 — Triển khai Pi và benchmark (~8 giờ)
 
-## Giai đoạn 7 — Replay, phục hồi và kiểm thử xuyên hệ thống
+- [ ] So `.pt` 320, NCNN 320, NCNN 416 trên cùng clip và cùng Pi (A1–A3).
+- [ ] File tracker FPS thấp: chỉnh `track_buffer`, ngưỡng ghép theo FPS đo được (ADR-0001 D11).
+- [ ] Đo FPS toàn luồng, tuổi frame, RAM/swap, nhiệt, throttling khi chạy kèm broker.
+- [ ] systemd `retail-edge.service`; reboot Pi tự chạy lại.
 
-- [ ] Kiểm JSON Schema và OpenAPI trong CI.
-- [ ] Chạy integration test với Mosquitto/PostgreSQL tạm thời.
-- [ ] Tắt lần lượt backend, broker, camera, ESP32 và reboot Pi.
-- [ ] Kiểm tra ACK trùng, replay ngược thứ tự, spool đầy và database rollback.
-- [ ] Chạy bench 30 phút rồi 2–4 giờ; lưu FPS, p95 latency, RAM, nhiệt và coverage.
+**Gate:** có bảng benchmark tái hiện được; chọn cấu hình theo cả độ đúng và tài nguyên.
 
-Điều kiện hoàn thành: lỗi không bị biến thành số 0; dữ liệu replay không trùng; trạng thái tự phục hồi hoặc báo rõ nguyên nhân cần can thiệp.
+## Phần 9 — Phục hồi lỗi (~6 giờ)
 
-## Giai đoạn 8 — Đóng gói và triển khai
+- [ ] Tắt backend 5 phút, phát sự kiện, bật lại: không mất, không trùng (T25, MET-07).
+- [ ] Restart Mosquitto khi còn hàng đợi; kiểm persistence.
+- [ ] Rút camera → UNKNOWN, `queue_count=null`, alert END INTERRUPTED (T11).
+- [ ] Reboot Pi không Internet: giờ đúng hoặc `clock_synced=false` rõ (T26).
+- [ ] Chạy ≥2 giờ không crash, RAM không tăng bất thường (T18).
+- [ ] Nếu mất/nhân đôi dữ liệu: ghi kết quả, viết ADR bổ sung SQLite outbox (ADR-0001 điều kiện xem xét lại D3).
 
-- [ ] Hoàn thiện systemd, Mosquitto ACL, Dockerfile và `deploy/server/compose.yaml`.
-- [ ] Viết backup/restore PostgreSQL và kiểm thử restore thật.
-- [ ] Viết hướng dẫn máy sạch, health check và rollback.
-- [ ] Đóng băng phiên bản Pi OS, Python, model, Java, Node, database và cấu hình demo.
-- [ ] Liên kết mỗi tiêu chí nghiệm thu với log, CSV, ảnh hoặc video bằng chứng.
+**Gate:** phục hồi hoặc báo lỗi rõ trong mọi kịch bản trên.
 
-Điều kiện hoàn thành: máy mới có thể triển khai theo tài liệu; reboot tự phục hồi; profile demo và profile đánh giá được phân biệt rõ.
+## Phần 10 — Nghiệp vụ web (~10 giờ)
 
-## Thứ tự pull request/commit đề xuất
+- [ ] `V004__auth.sql`; Spring Security session, BCrypt, CSRF cho request ghi, ADMIN/MANAGER kiểm ở API.
+- [ ] Trang Login; route guard; xử lý 401/403/session hết hạn.
+- [ ] Báo cáo giờ/ngày theo giờ Việt Nam, coverage từ `telemetry_minute`, phút thiếu là gap (T21).
+- [ ] Alerts phân trang: opened/acked/ended, độ trễ ACK, end_reason.
+- [ ] CSV export.
+- [ ] (P1) `V005__settings.sql`; `PUT /api/settings` → `settings/set` → `settings/result`; PENDING/APPLIED/REJECTED; revision cũ không ghi đè; END CONFIG_CHANGED.
+- [ ] (P1) OLED trên ESP32.
 
-1. `contracts/mqtt-api-v1`
-2. `backend/flyway-crossing-schema`
-3. `integration/crossing-vertical-slice`
-4. `edge/config-capture-vision`
-5. `edge/crossing-queue-state-machines`
-6. `firmware/mqtt-alert-ack`
-7. `backend/mvp-services-api`
-8. `frontend/mvp-dashboard`
-9. `integration/replay-failure-tests`
-10. `deploy/pi-server-pilot`
+**Gate:** báo cáo không biến thiếu dữ liệu thành 0; auth đúng khi gọi thẳng API.
+
+## Phần 11 — Đánh giá (~12 giờ)
+
+- [ ] Clip có đồng ý người tham gia; tách dev/test theo buổi, không trộn frame.
+- [ ] Ground truth crossing (timestamp/hướng), queue count sau dwell, alert interval theo profile.
+- [ ] Crossing: sai số mỗi hướng ≤10% (≤5% mục tiêu mở rộng), có clip zero-count.
+- [ ] Queue MAE ≤1 người.
+- [ ] Alert precision/recall ≥0,90: state machine chạy trên chuỗi queue-count có nhãn + clip live profile demo; ghi rõ nguồn và cỡ mẫu.
+- [ ] p95 quyết định edge → LED ≤1 giây, không tính hold, đo bằng clock hợp lệ.
+
+**Gate:** dữ liệu test độc lập; số liệu thật được ghi kể cả khi không đạt.
+
+## Phần 12 — Đóng gói (~8 giờ)
+
+- [ ] `deploy/server/compose.yaml` cho PostgreSQL/backend/frontend cùng origin.
+- [ ] DB/broker không public Internet; secret ngoài source.
+- [ ] Backup/restore PostgreSQL đã thử thật.
+- [ ] CI: unit edge, contract validate, build backend/frontend; Testcontainers integration nếu kịp.
+- [ ] README quickstart từ clone sạch; người không có Pi chạy được bằng replay video + fake publisher.
+- [ ] Video demo 3–5 phút; tài liệu kiến trúc, benchmark, giới hạn; release theo kết quả thực.
+
+**Gate:** tái hiện được, số liệu có bằng chứng; không tuyên bố production-ready.
+
+## Khi thiếu thời gian
+
+Cắt theo thứ tự (ADR-0001 D10): settings web → CSV → vai trò MANAGER → NCNN 416 → OLED. **Không cắt:** UNKNOWN, chống trùng, đo trên Pi thật, test offline.
+
+## Bằng chứng
+
+Kết quả trong `evaluation/`, quyết định trong `docs/decisions/`, vận hành trong `docs/operations/`. Không commit model lớn, clip riêng tư, secret/runtime DB. Chỉ ghi command vào README khi đã chạy thành công.
+
+**Việc tiếp theo:** phần 1 (Pi) song song với phần 2 (contract).
