@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "event_id": "c4d6e8f0-3a5b-4c7d-8e9f-0a1b2c3d4e5f",
+  "site_id": "site01",
+  "device_id": "edge01",
+  "session_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  "seq": 12,
+  "occurred_at": "2026-11-02T10:16:00.000Z",
+  "config_version": "pilot-2026-11-01",
+  "minute_start": "2026-11-02T10:15:00Z",
+  "valid_seconds": 61,
+  "queue_avg": 2.4,
+  "queue_max": 5,
+  "fps": 3.1,
+  "frame_age_ms": 240
+}
