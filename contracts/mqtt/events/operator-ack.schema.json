@@ -3,23 +3,11 @@
   "$id": "https://retailvision.local/contracts/mqtt/events/operator-ack.schema.json",
   "title": "node01/events/operator-ack — ESP32 gửi, QoS 0, không có envelope",
   "type": "object",
-  "required": [
-    "ack_id",
-    "alert_id",
-    "device_id"
-  ],
+  "required": ["ack_id", "alert_id", "device_id"],
   "properties": {
-    "ack_id": {
-      "type": "string",
-      "format": "uuid"
-    },
-    "alert_id": {
-      "type": "string",
-      "format": "uuid"
-    },
-    "device_id": {
-      "const": "node01"
-    }
+    "ack_id": { "type": "string", "format": "uuid" },
+    "alert_id": { "type": "string", "format": "uuid" },
+    "device_id": { "const": "node01" }
   },
   "additionalProperties": false
 }

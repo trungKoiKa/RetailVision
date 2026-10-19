@@ -2,40 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://retailvision.local/contracts/mqtt/events/crossing.schema.json",
   "title": "edge01/events/crossing — một lượt qua vạch, QoS 1",
-  "allOf": [
-    {
-      "$ref": "../common/envelope.schema.json"
-    }
-  ],
+  "allOf": [{ "$ref": "../common/envelope.schema.json" }],
   "type": "object",
-  "required": [
-    "direction",
-    "track_id",
-    "line_id",
-    "profile"
-  ],
+  "required": ["direction", "track_id", "line_id", "profile"],
   "properties": {
-    "direction": {
-      "enum": [
-        "IN",
-        "OUT"
-      ]
-    },
-    "track_id": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "line_id": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 32
-    },
-    "profile": {
-      "enum": [
-        "pilot",
-        "demo"
-      ]
-    }
+    "direction": { "enum": ["IN", "OUT"] },
+    "track_id": { "type": "integer", "minimum": 0 },
+    "line_id": { "type": "string", "minLength": 1, "maxLength": 32 },
+    "profile": { "enum": ["pilot", "demo"] }
   },
   "unevaluatedProperties": false
 }
