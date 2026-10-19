@@ -6,7 +6,10 @@
     { "$ref": "../common/envelope.schema.json" },
     {
       "if": { "properties": { "transition": { "const": "END" } } },
-      "then": { "required": ["reason"], "properties": { "reason": { "enum": ["NORMALIZED", "INTERRUPTED", "CONFIG_CHANGED"] } } }
+      "then": {
+        "required": ["reason"],
+        "properties": { "reason": { "enum": ["NORMALIZED", "INTERRUPTED", "CONFIG_CHANGED"] } }
+      }
     },
     {
       "if": { "properties": { "transition": { "const": "ACK" } } },
