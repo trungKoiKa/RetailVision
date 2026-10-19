@@ -3,110 +3,34 @@
   "$id": "https://retailvision.local/contracts/mqtt/events/alert.schema.json",
   "title": "edge01/events/alert — transition OPEN/ACK/END, QoS 1",
   "allOf": [
+    { "$ref": "../common/envelope.schema.json" },
     {
-      "$ref": "../common/envelope.schema.json"
-    },
-    {
-      "if": {
-        "properties": {
-          "transition": {
-            "const": "END"
-          }
-        }
-      },
+      "if": { "properties": { "transition": { "const": "END" } } },
       "then": {
-        "required": [
-          "reason"
-        ],
-        "properties": {
-          "reason": {
-            "enum": [
-              "NORMALIZED",
-              "INTERRUPTED",
-              "CONFIG_CHANGED"
-            ]
-          }
-        }
+        "required": ["reason"],
+        "properties": { "reason": { "enum": ["NORMALIZED", "INTERRUPTED", "CONFIG_CHANGED"] } }
       }
     },
     {
-      "if": {
-        "properties": {
-          "transition": {
-            "const": "ACK"
-          }
-        }
-      },
+      "if": { "properties": { "transition": { "const": "ACK" } } },
       "then": {
-        "required": [
-          "ack_id",
-          "ack_device_id"
-        ],
+        "required": ["ack_id", "ack_device_id"],
         "properties": {
-          "ack_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "ack_device_id": {
-            "type": "string",
-            "minLength": 1
-          }
+          "ack_id": { "type": "string", "format": "uuid" },
+          "ack_device_id": { "type": "string", "minLength": 1 }
         }
       }
     }
   ],
   "type": "object",
-  "required": [
-    "alert_id",
-    "transition",
-    "queue_count",
-    "reason",
-    "ack_id",
-    "ack_device_id"
-  ],
+  "required": ["alert_id", "transition", "queue_count", "reason", "ack_id", "ack_device_id"],
   "properties": {
-    "alert_id": {
-      "type": "string",
-      "format": "uuid"
-    },
-    "transition": {
-      "enum": [
-        "OPEN",
-        "ACK",
-        "END"
-      ]
-    },
-    "queue_count": {
-      "type": [
-        "integer",
-        "null"
-      ],
-      "minimum": 0,
-      "maximum": 1000
-    },
-    "reason": {
-      "enum": [
-        null,
-        "NORMALIZED",
-        "INTERRUPTED",
-        "CONFIG_CHANGED"
-      ]
-    },
-    "ack_id": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "format": "uuid"
-    },
-    "ack_device_id": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "minLength": 1,
-      "maxLength": 64
-    }
+    "alert_id": { "type": "string", "format": "uuid" },
+    "transition": { "enum": ["OPEN", "ACK", "END"] },
+    "queue_count": { "type": ["integer", "null"], "minimum": 0, "maximum": 1000 },
+    "reason": { "enum": [null, "NORMALIZED", "INTERRUPTED", "CONFIG_CHANGED"] },
+    "ack_id": { "type": ["string", "null"], "format": "uuid" },
+    "ack_device_id": { "type": ["string", "null"], "minLength": 1, "maxLength": 64 }
   },
   "unevaluatedProperties": false
 }

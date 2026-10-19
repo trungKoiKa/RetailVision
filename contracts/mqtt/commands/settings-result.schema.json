@@ -2,40 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://retailvision.local/contracts/mqtt/commands/settings-result.schema.json",
   "title": "edge01/settings/result — Pi trả về Spring (P1)",
-  "allOf": [
-    {
-      "$ref": "../common/envelope.schema.json"
-    }
-  ],
+  "allOf": [{ "$ref": "../common/envelope.schema.json" }],
   "type": "object",
-  "required": [
-    "request_id",
-    "result",
-    "settings_revision",
-    "reason"
-  ],
+  "required": ["request_id", "result", "settings_revision", "reason"],
   "properties": {
-    "request_id": {
-      "type": "string",
-      "format": "uuid"
-    },
-    "result": {
-      "enum": [
-        "APPLIED",
-        "REJECTED"
-      ]
-    },
-    "settings_revision": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "reason": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "maxLength": 200
-    }
+    "request_id": { "type": "string", "format": "uuid" },
+    "result": { "enum": ["APPLIED", "REJECTED"] },
+    "settings_revision": { "type": "integer", "minimum": 0 },
+    "reason": { "type": ["string", "null"], "maxLength": 200 }
   },
   "unevaluatedProperties": false
 }
