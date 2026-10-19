@@ -13,7 +13,7 @@ source:
 
 model:
   weights: ../models/source/yolov8n.pt
-  image_size: 320
+  image_size: 640  # tạm: 320 bỏ sót người nhỏ trên video 1920x1080 (xem ghi chú trong edge/README.md)
   confidence: 0.35
   tracker: bytetrack.yaml
 
