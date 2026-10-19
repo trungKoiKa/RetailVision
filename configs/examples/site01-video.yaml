@@ -1,0 +1,37 @@
+# Cấu hình mẫu chạy trên file video đã quay (không cần camera).
+# Mọi toạ độ vạch/vùng là 0–1 theo khung hình. Giá trị dưới đây CHỈ là điểm bắt đầu:
+# phải vẽ lại theo đúng video thật bằng công cụ hiệu chuẩn trước khi đo.
+site_id: site01
+device_id: edge01
+node_id: node01
+profile: pilot
+config_version: pilot-video-draft
+
+source:
+  type: video
+  path: ../data/raw/clip.mp4   # tương đối theo file này; có thể ghi đè bằng --source
+
+model:
+  weights: ../models/source/yolov8n.pt
+  image_size: 320
+  confidence: 0.35
+  tracker: bytetrack.yaml
+
+counting:
+  line: [[0.45, 0.10], [0.45, 0.90]]   # vạch đứng, A=đầu trên, B=đầu dưới
+  deadband_px: 12
+  min_stable_observations: 2
+  a_to_b_direction: IN                 # người đi từ phía -1 sang +1 (A→B) được tính là IN
+
+queue:
+  polygon: [[0.60, 0.20], [0.95, 0.20], [0.95, 0.90], [0.60, 0.90]]
+  dwell_seconds: 2.0
+
+alert:
+  on_count: 5
+  on_hold_seconds: 60
+  off_count: 3
+  off_hold_seconds: 10
+
+health:
+  stale_seconds: 3

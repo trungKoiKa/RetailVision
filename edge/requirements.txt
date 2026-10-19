@@ -1,0 +1,5 @@
+# Phụ thuộc chạy edge. Ultralytics (YOLO) sẽ thêm khi chạy thử model thật.
+pyyaml==6.0.3
+pydantic==2.14.1
+numpy==2.5.4
+opencv-python-headless==5.0.0
