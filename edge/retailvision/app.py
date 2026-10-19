@@ -14,11 +14,14 @@ import time
 from pathlib import Path
 from typing import Optional
 
+import cv2
+
 from pydantic import ValidationError
 
 from retailvision.config.loader import load_config
 from retailvision.pipeline.capture import CameraSource, Frame, VideoFileSource
 from retailvision.pipeline.runner import JsonlSink, Pipeline, open_events_file, run_pipeline
+from retailvision.presentation.overlay import draw
 
 CAMERA_STALE_POLL_S = 0.01
 
@@ -28,6 +31,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--config", type=Path, required=True, help="file YAML cấu hình edge")
     parser.add_argument("--source", type=Path, help="ghi đè nguồn bằng file video")
     parser.add_argument("--events-out", type=Path, help="ghi sự kiện JSONL (mặc định: stdout)")
+    parser.add_argument("--video-out", type=Path, help="ghi video đã vẽ vạch, vùng chờ, ID người (chỉ khi xử lý file)")
     parser.add_argument("--check-config", action="store_true", help="chỉ kiểm tra cấu hình rồi thoát")
     return parser
 
@@ -103,7 +107,29 @@ def run(args: argparse.Namespace) -> int:
             path = args.source or config.source.path
             source = VideoFileSource(path)
             pipeline = Pipeline(config, source.frame_size)
-            processed = run_pipeline(pipeline, source.read, detector, sink)
+            writer = None
+            observer = None
+            if args.video_out is not None:
+                args.video_out.parent.mkdir(parents=True, exist_ok=True)
+                fps = source.fps or 25.0
+                writer = cv2.VideoWriter(
+                    str(args.video_out), cv2.VideoWriter_fourcc(*"mp4v"), fps, source.frame_size
+                )
+                if not writer.isOpened():
+                    raise RuntimeError(f"Không tạo được file video: {args.video_out}")
+
+                def observer(frame, tracks, pl):
+                    status = (
+                        f"t={frame.ts:6.1f}s  IN={pl.in_count}  OUT={pl.out_count}  "
+                        f"queue={pl.last_queue_count}  state={pl.alert.state.value}"
+                    )
+                    writer.write(draw(frame.image, tracks, pl.line_px, pl.polygon_px, status))
+
+            try:
+                processed = run_pipeline(pipeline, source.read, detector, sink, observer=observer)
+            finally:
+                if writer is not None:
+                    writer.release()
             source.close()
         else:
             processed = _run_camera(config, detector, sink)

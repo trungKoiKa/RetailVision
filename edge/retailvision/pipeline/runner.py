@@ -29,13 +29,15 @@ class Pipeline:
     def __init__(self, config: EdgeConfig, frame_size: tuple[int, int]) -> None:
         w, h = frame_size
         line = to_pixels(config.counting.line, w, h)
+        self.line_px = (line[0], line[1])
+        self.polygon_px = to_pixels(config.queue.polygon, w, h)
         self.counter = LineCounter(
             line_px=(line[0], line[1]),
             deadband_px=config.counting.deadband_px,
             min_stable_observations=config.counting.min_stable_observations,
             a_to_b_direction=config.counting.a_to_b_direction,
         )
-        self.zone = QueueZone(to_pixels(config.queue.polygon, w, h), config.queue.dwell_seconds)
+        self.zone = QueueZone(self.polygon_px, config.queue.dwell_seconds)
         a = config.alert
         self.alert = AlertStateMachine(
             AlertSettings(
@@ -46,6 +48,10 @@ class Pipeline:
             )
         )
         self._last_sample_second: Optional[int] = None
+        # tổng hợp để hiển thị; không ghi ra file
+        self.in_count = 0
+        self.out_count = 0
+        self.last_queue_count = 0
 
     def step(self, tracks: list[Track], ts: float) -> list[dict]:
         """Xử lý một khung hình, trả về các sự kiện dạng dict để ghi ra.
@@ -55,7 +61,12 @@ class Pipeline:
         events: list[dict] = []
         for crossing in self.counter.update(tracks, ts):
             events.append(_crossing_event(crossing))
+            if crossing.direction == "IN":
+                self.in_count += 1
+            else:
+                self.out_count += 1
         count = self.zone.update(tracks, ts)
+        self.last_queue_count = count
         second = int(ts)
         if second != self._last_sample_second:
             self._last_sample_second = second
@@ -94,9 +105,12 @@ def run_pipeline(
     read_frame: Callable[[], Optional[Frame]],
     detector: Detector,
     sink: JsonlSink,
-    on_frame: Optional[Callable[[int], None]] = None,
+    observer: Optional[Callable[[Frame, list[Track], Pipeline], None]] = None,
 ) -> int:
-    """Lặp đến khi nguồn hết khung hình (video) hoặc dừng (camera). Trả về số khung đã xử lý."""
+    """Lặp đến khi nguồn hết khung hình (video) hoặc dừng (camera). Trả về số khung đã xử lý.
+
+    `observer` được gọi sau mỗi khung với khung ảnh, các track và pipeline (để vẽ hình minh hoạ).
+    """
     processed = 0
     while True:
         frame = read_frame()
@@ -105,8 +119,8 @@ def run_pipeline(
         tracks = detector.process(frame.image)
         sink.write(pipeline.step(tracks, frame.ts))
         processed += 1
-        if on_frame:
-            on_frame(processed)
+        if observer:
+            observer(frame, tracks, pipeline)
     return processed
 
 

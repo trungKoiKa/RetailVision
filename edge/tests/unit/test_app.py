@@ -66,3 +66,21 @@ def test_video_run_writes_jsonl_events(tmp_path, monkeypatch):
     assert lines, "phải có ít nhất một sự kiện"
     assert all("type" in e and "ts" in e for e in lines)
     assert any(e["type"] == "queue" and e["count"] == 0 for e in lines)
+
+
+def test_video_out_writes_annotated_clip(tmp_path, monkeypatch):
+    import retailvision.pipeline.vision as vision
+
+    monkeypatch.setattr(vision, "YoloTracker", FakeDetector)
+    cfg = tmp_path / "site.yaml"
+    cfg.write_text(CONFIG, encoding="utf-8")
+    clip = tmp_path / "clip.avi"
+    make_clip(clip, frames=5)
+    video_out = tmp_path / "out" / "annotated.mp4"
+
+    assert app.main(["--config", str(cfg), "--source", str(clip), "--video-out", str(video_out)]) == 0
+
+    check = cv2.VideoCapture(str(video_out))
+    assert check.isOpened()
+    assert int(check.get(cv2.CAP_PROP_FRAME_COUNT)) == 5
+    check.release()

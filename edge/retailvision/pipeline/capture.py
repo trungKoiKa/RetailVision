@@ -33,6 +33,10 @@ class VideoFileSource:
         self._fps = self._cap.get(cv2.CAP_PROP_FPS) or 0.0
 
     @property
+    def fps(self) -> float:
+        return self._fps
+
+    @property
     def frame_size(self) -> tuple[int, int]:
         return (
             int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
