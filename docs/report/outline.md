@@ -1,13 +1,10 @@
-# KẾ HOẠCH TRIỂN KHAI ĐỒ ÁN
+# Đề cương báo cáo đồ án
 
-**Định hướng:** Pi 4 xử lý một camera và chạy Mosquitto; ESP32 nhận cảnh báo qua MQTT; Spring Boot + PostgreSQL + React trên máy chủ LAN.  
-**Tên đề tài:** “Thiết kế hệ thống giám sát lưu lượng khách ứng dụng thị giác máy tính tại biên”.
+Tài liệu phục vụ viết báo cáo, không thuộc luồng đọc của dev. Nội dung kỹ thuật lấy từ `docs/1-requirements.md` và `docs/2-design.md`.
 
-**Mục đích:** cung cấp dữ liệu để quản lý tham khảo bố trí nhân sự theo giờ và yêu cầu hỗ trợ khi vùng chờ đông kéo dài. Pi tiếp tục giám sát/cảnh báo khi máy chủ web tạm ngắt; báo cáo sẽ bù dữ liệu theo sự kiện đã lưu trên Pi khi máy chủ trở lại.
+## Khó khăn khi thu dữ liệu
 
----
-
-## ĐỀ CƯƠNG VÀ MỤC LỤC BÁO CÁO ĐỒ ÁN
+Một khó khăn lớn của đề tài là thu thập dữ liệu thực tế tại cửa hàng tiện lợi hoặc siêu thị. Camera tại các địa điểm này thường liên quan đến quyền riêng tư của khách hàng, quy định nội bộ và sự đồng ý của đơn vị vận hành, nên nhóm khó có thể tự quay hoặc lấy video để làm dữ liệu huấn luyện/đánh giá. Ngoài ra, dữ liệu cần có nhiều tình huống như đông người, che khuất, ánh sáng khác nhau, khách đi sát nhau hoặc đứng lâu tại quầy, trong khi việc thu thập đủ các tình huống này cần nhiều thời gian và sự phối hợp từ cửa hàng. Vì vậy, đồ án có thể phải bắt đầu bằng dữ liệu mô phỏng hoặc quay trong môi trường được cho phép, đồng thời nêu rõ giới hạn rằng kết quả chỉ phản ánh điều kiện thử nghiệm, chưa đại diện hoàn toàn cho mọi cửa hàng thực tế
 
 **Tên đề tài:** Thiết kế hệ thống giám sát lưu lượng khách ứng dụng thị giác máy tính tại biên.
 
@@ -56,12 +53,6 @@
 - **1.5.2.** MQTT, publish/subscribe và phản hồi ở cấp ứng dụng.
 - **1.5.3.** PostgreSQL, Spring Boot, React và vận hành qua mạng nội bộ.
 - **1.5.4.** Triển khai mô hình trên CPU và định hướng tối ưu với NCNN.
-
-#### 1.6. Kết luận chương 1
-
-**Nội dung cần thể hiện:** lý do đề tài cần cả thống kê lưu lượng và thông báo vùng chờ; điều kiện mặt bằng và nhân viên tiếp nhận; cơ sở lựa chọn công nghệ. Không khẳng định mọi cửa hàng nhỏ đều quá tải, hoặc nguyên mẫu vượt sản phẩm thương mại. Chỉ trình bày lý thuyết thực sự dùng trong thiết kế và đánh giá.
-
-**Đầu ra:** phát biểu bài toán, bảng đối chiếu giải pháp, bảng phạm vi và sơ đồ định hướng hệ thống. Chi tiết yêu cầu được đặc tả ở chương 2 để tránh lặp lại.
 
 ### CHƯƠNG 2. PHÂN TÍCH VÀ THIẾT KẾ HỆ THỐNG
 
@@ -116,12 +107,6 @@
 - **2.7.3.** Chế độ xem ảnh phục vụ hiệu chuẩn/demo qua LAN.
 - **2.7.4.** Tự khởi động, nhật ký và phân biệt mất Internet với mất LAN/broker.
 
-#### 2.8. Kết luận chương 2
-
-**Nội dung cần thể hiện:** mỗi lựa chọn thiết kế phải đáp ứng một yêu cầu cụ thể. Phân biệt số người trong vùng với thời gian chờ của từng khách; nút xác nhận chỉ cho biết nhân viên đã nhận yêu cầu, không tự xóa tình trạng đông. Tài liệu thiết kế phải thể hiện trạng thái mất dữ liệu, không chỉ luồng hoạt động bình thường.
-
-**Đầu ra:** bảng yêu cầu, sơ đồ kiến trúc/mặt bằng/đấu nối, lưu đồ đếm, biểu đồ trạng thái cảnh báo, hợp đồng MQTT, thiết kế DB và phác thảo giao diện. Không chép hướng dẫn cài đặt chi tiết vào chương thiết kế.
-
 ### CHƯƠNG 3. XÂY DỰNG VÀ TRIỂN KHAI NGUYÊN MẪU
 
 #### 3.1. Môi trường phát triển và tổ chức mã nguồn
@@ -165,12 +150,6 @@
 - **3.6.3.** Cấu hình dịch vụ tự khởi động, nhật ký và lưu trữ cục bộ.
 - **3.6.4.** Tích hợp toàn hệ thống và chuẩn bị profile pilot/demo.
 
-#### 3.7. Kết luận chương 3
-
-**Nội dung cần thể hiện:** phần thực sự tự xây dựng, cách tích hợp và các vấn đề triển khai đã giải quyết. Dùng ảnh thiết bị thật, cấu hình thực tế, ảnh giao diện và trích đoạn code có chọn lọc. Nếu chỉ lắp mô hình trong nhà/lab, ghi đúng môi trường đó. Model pretrained là phương án hợp lệ; chỉ thêm nội dung fine-tune khi đã thực hiện và có dữ liệu để trình bày.
-
-**Đầu ra:** nguyên mẫu tích hợp, mã nguồn có phiên bản, ảnh đấu nối/lắp đặt, ảnh hiệu chuẩn, log MQTT, dữ liệu mẫu, dashboard và hướng dẫn khởi động. Chương này nêu cách hiện thực; kết quả đo so sánh các cấu hình được tập trung ở chương 4.
-
 ### CHƯƠNG 4. THỰC NGHIỆM VÀ ĐÁNH GIÁ HỆ THỐNG
 
 #### 4.1. Mục tiêu và cấu hình thực nghiệm
@@ -194,7 +173,7 @@
 - **4.3.4.** Báo cáo theo giờ/ngày, trùng bản tin và khoảng mất dữ liệu.
 - **4.3.5.** Hai chức năng đếm cửa và giám sát vùng chờ hoạt động đồng thời.
 
-#### 4.4. Đánh giá hiệu năng và độ ổn định trên Pi 4
+#### 4.4. Đánh giá hiệu năng và độ ổn định trên máy tính nhúng
 
 - **4.4.1.** So sánh cấu hình model và kích thước đầu vào trên cùng dữ liệu.
 - **4.4.2.** FPS toàn pipeline, độ trễ cảnh báo và tải khi bật dashboard/xem trước.
@@ -222,44 +201,24 @@
 - **4.7.3.** Phần tự phát triển, phần kế thừa và đóng góp của đồ án.
 - **4.7.4.** Hạn chế còn tồn tại và phạm vi kết luận được bằng chứng hỗ trợ.
 
-#### 4.8. Kết luận chương 4
-
-**Nội dung cần thể hiện:** phương pháp thử và bằng chứng đủ để người đọc hiểu kết quả trong điều kiện nào. Mục tiêu ≥3 FPS là mục tiêu thử nghiệm, không phải kết quả đã đạt. Không dùng số đo GPU/PC thay cho Pi, số lượng người hiện diện thay cho lượt vào, hoặc xác nhận cảnh báo thay cho bằng chứng giảm thời gian chờ.
-
-**Đầu ra:** danh mục dữ liệu, ground truth, bảng sai số, kết quả cảnh báo, benchmark, log sự cố/phục hồi, video tích hợp và bảng yêu cầu – kết quả đo – đạt/chưa đạt – bằng chứng. Phần thử bằng bản tin giả kiểm chứng firmware/logic nhưng không thay thế thử camera thật. Nếu chưa có cửa hàng cho thử nghiệm, giới hạn kết luận ở nguyên mẫu và mô tả điều kiện cần khảo sát trước khi lắp thật.
-
 ### Phần cuối báo cáo
 
-**Kết luận và hướng phát triển:** các mục tiêu đã đạt đến đâu dựa trên chương 4; nêu hướng cải thiện theo lỗi thực tế. Nhiều camera, tích hợp POS, đo thời gian chờ cá nhân hoặc fine-tune chỉ là hướng mở rộng nếu chưa triển khai, không thêm thành yêu cầu bắt buộc.
+**Kết luận và hướng phát triển:**
 
-**Trách nhiệm đạo đức nghề nghiệp:** trình bày sự đồng ý khi thu hình, chế độ không lưu video mặc định, phạm vi xem trước khi demo, ID tạm, trung thực số liệu và ghi nguồn mã/model/dataset. Quyền truy cập dữ liệu nghiên cứu cần được kiểm soát; không tuyên bố ẩn danh tuyệt đối chỉ vì không dùng nhận diện khuôn mặt.
+**Trách nhiệm đạo đức nghề nghiệp:**
 
-**Tài liệu tham khảo:** liệt kê nguồn thực sự được sử dụng và trích dẫn tại nội dung tương ứng; phân biệt nguồn công nghệ, nguồn bối cảnh kinh doanh, báo cáo tham khảo về bố cục và mã nguồn được kế thừa.
+**Tài liệu tham khảo**
 
-**Phụ lục:** sơ đồ đấu nối, BOM, hợp đồng MQTT, cấu hình mẫu, hướng dẫn cài/chạy, cấu trúc thư mục, biểu mẫu gán nhãn, bảng kiểm thử chi tiết và đường dẫn mã nguồn/video được phép chia sẻ.
-
-### Ánh xạ từ kế hoạch triển khai sang báo cáo
-
-| Phần báo cáo        | Các mục kế hoạch cung cấp nội dung | Trọng tâm khi viết                               |
-| ------------------- | ---------------------------------- | ------------------------------------------------ |
-| Chương 1            | 1, 2, 6, 7, 9, 10, 21               | Bối cảnh, giải pháp liên quan và cơ sở công nghệ |
-| Chương 2            | 2–6, 8–12, 14, 15                  | Yêu cầu, thiết kế, các quyết định kỹ thuật       |
-| Chương 3            | 4–12, 14, 19, 21                   | Lắp đặt, hiện thực và cấu hình đã triển khai     |
-| Chương 4            | 13, 15–18, 21                      | Dữ liệu, thử nghiệm, kết quả đo và hạn chế       |
-| Kết luận và phụ lục | 6, 18, 19                          | Mức hoàn thành, bàn giao, nguồn và hướng mở rộng |
+**Phụ lục**
 
 ### Tài liệu tham khảo chính dự kiến
 
-| Mã   | Tài liệu                                                                                                                             | Vai trò trong báo cáo                                       |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
-| TK01 | [Footfall counter siêu thị](https://anninhso.com/blog/footfall-counter-sieu-thi-nguyen-ly-ai-ung-dung-thuc-te/)                      | Bối cảnh ứng dụng; không lấy quảng bá làm số đo thực nghiệm |
-| TK02 | [Ultralytics YOLOv8](https://docs.ultralytics.com/models/yolov8/) và [tracking](https://docs.ultralytics.com/modes/track/)           | Detector, tracker và giới hạn thực nghiệm                   |
-| TK03 | [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)                                                       | Cấu hình edge và benchmark                                  |
-| TK04 | [Eclipse Mosquitto](https://mosquitto.org/documentation/)                                                                            | Broker MQTT trong LAN                                       |
-| TK05 | [Spring Boot](https://docs.spring.io/spring-boot/index.html) và [Spring Security](https://docs.spring.io/spring-security/reference/) | Backend, API và phân quyền                                  |
-| TK06 | [PostgreSQL](https://www.postgresql.org/docs/) và [Flyway](https://documentation.red-gate.com/fd/)                                   | Cơ sở dữ liệu và migration                                  |
-| TK07 | [React](https://react.dev/) và [Vite](https://vite.dev/guide/)                                                                       | Web dashboard                                               |
-
----
-
-Tài liệu điều phối: [PRD](./RetailVision_PRD.md), [kế hoạch kỹ thuật](./TrienKhai.md) và [checklist khởi tạo](./implementation-checklist.md).
+| Mã   | Tài liệu                                                                                                                             | Vai trò trong báo cáo                     |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| TK01 | [Footfall counter siêu thị](https://anninhso.com/blog/footfall-counter-sieu-thi-nguyen-ly-ai-ung-dung-thuc-te/)                      | Bối cảnh ứng dụng                         |
+| TK02 | [Ultralytics YOLOv8](https://docs.ultralytics.com/models/yolov8/) và [tracking](https://docs.ultralytics.com/modes/track/)           | Detector, tracker và giới hạn thực nghiệm |
+| TK03 | [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)                                                       | Cấu hình edge và benchmark                |
+| TK04 | [Eclipse Mosquitto](https://mosquitto.org/documentation/)                                                                            | Broker MQTT trong LAN                     |
+| TK05 | [Spring Boot](https://docs.spring.io/spring-boot/index.html) và [Spring Security](https://docs.spring.io/spring-security/reference/) | Backend, API và phân quyền                |
+| TK06 | [PostgreSQL](https://www.postgresql.org/docs/) và [Flyway](https://documentation.red-gate.com/fd/)                                   | Cơ sở dữ liệu và migration                |
+| TK07 | [React](https://react.dev/) và [Vite](https://vite.dev/guide/)                                                                       | Web dashboard                             |
