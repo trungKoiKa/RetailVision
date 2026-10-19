@@ -2,19 +2,54 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://retailvision.local/contracts/mqtt/events/telemetry.schema.json",
   "title": "edge01/telemetry — tổng hợp mỗi 60 giây, QoS 1",
-  "allOf": [{ "$ref": "../common/envelope.schema.json" }],
+  "allOf": [
+    {
+      "$ref": "../common/envelope.schema.json"
+    }
+  ],
   "type": "object",
-  "required": ["minute_start", "valid_seconds", "queue_avg", "queue_max", "fps", "frame_age_ms"],
+  "required": [
+    "minute_start",
+    "valid_seconds",
+    "queue_avg",
+    "queue_max",
+    "fps",
+    "frame_age_ms"
+  ],
   "properties": {
     "minute_start": {
       "type": "string",
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:00Z$"
     },
-    "valid_seconds": { "type": "integer", "minimum": 0, "maximum": 60 },
-    "queue_avg": { "type": ["number", "null"], "minimum": 0, "maximum": 1000 },
-    "queue_max": { "type": ["integer", "null"], "minimum": 0, "maximum": 1000 },
-    "fps": { "type": "number", "minimum": 0 },
-    "frame_age_ms": { "type": "integer", "minimum": 0 }
+    "valid_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 60
+    },
+    "queue_avg": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "queue_max": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "fps": {
+      "type": "number",
+      "minimum": 0
+    },
+    "frame_age_ms": {
+      "type": "integer",
+      "minimum": 0
+    }
   },
   "unevaluatedProperties": false
 }

@@ -1,1 +1,14 @@
-{"schema_version":1,"event_id":"7a2e4c6b-1d3f-4a5b-8c9d-0e1f2a3b4c5e","site_id":"site01","device_id":"edge01","session_id":"a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d","seq":210,"occurred_at":"2026-11-02T10:05:11.400Z","config_version":"pilot-2026-11-01","direction":"IN","track_id":17,"line_id":"door-1","profile":"pilot"}
+{
+  "schema_version": 1,
+  "event_id": "7a2e4c6b-1d3f-4a5b-8c9d-0e1f2a3b4c5e",
+  "site_id": "site01",
+  "device_id": "edge01",
+  "session_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  "seq": 210,
+  "occurred_at": "2026-11-02T10:05:11.400Z",
+  "config_version": "pilot-2026-11-01",
+  "direction": "IN",
+  "track_id": 17,
+  "line_id": "door-1",
+  "profile": "pilot"
+}

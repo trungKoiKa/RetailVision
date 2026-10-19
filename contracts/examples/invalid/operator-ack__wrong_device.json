@@ -1,1 +1,5 @@
-{"ack_id":"9d0c1b2a-3e4f-4a5b-9c6d-7e8f9a0b1c2d","alert_id":"5b8e2f10-1c3d-4e5f-8a6b-7c8d9e0f1a2b","device_id":"node02"}
+{
+  "ack_id": "9d0c1b2a-3e4f-4a5b-9c6d-7e8f9a0b1c2d",
+  "alert_id": "5b8e2f10-1c3d-4e5f-8a6b-7c8d9e0f1a2b",
+  "device_id": "node02"
+}
