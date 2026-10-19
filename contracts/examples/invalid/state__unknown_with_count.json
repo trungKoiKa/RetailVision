@@ -1,0 +1,1 @@
+{"schema_version":1,"event_id":"3f1c9a52-7d4e-4b8a-9c21-5e6f7a8b9c09","site_id":"site01","device_id":"edge01","session_id":"a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d","seq":1500,"occurred_at":"2026-11-02T10:15:03.120Z","config_version":"pilot-2026-11-01","observed_at":"2026-11-02T10:15:03.050Z","acked":false,"settings_revision":0,"state":"UNKNOWN","queue_count":0,"alert_id":null}

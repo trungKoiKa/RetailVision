@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://retailvision.local/contracts/mqtt/events/status.schema.json",
+  "title": "edge01/status và node01/status — retained, kèm Last Will",
+  "allOf": [{ "$ref": "../common/envelope.schema.json" }],
+  "type": "object",
+  "required": ["status", "version", "clock_synced"],
+  "properties": {
+    "status": { "enum": ["ONLINE", "OFFLINE"] },
+    "version": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "clock_synced": { "type": "boolean" }
+  },
+  "unevaluatedProperties": false
+}
