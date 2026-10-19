@@ -24,6 +24,7 @@ from retailvision.pipeline.runner import JsonlSink, Pipeline, open_events_file, 
 from retailvision.presentation.overlay import draw
 
 CAMERA_STALE_POLL_S = 0.01
+WINDOW_NAME = "RetailVision"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,6 +33,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--source", type=Path, help="ghi đè nguồn bằng file video")
     parser.add_argument("--events-out", type=Path, help="ghi sự kiện JSONL (mặc định: stdout)")
     parser.add_argument("--video-out", type=Path, help="ghi video đã vẽ vạch, vùng chờ, ID người (chỉ khi xử lý file)")
+    parser.add_argument("--show", action="store_true", help="mở cửa sổ xem trực tiếp; nhấn q để dừng")
     parser.add_argument("--check-config", action="store_true", help="chỉ kiểm tra cấu hình rồi thoát")
     return parser
 
@@ -108,7 +110,6 @@ def run(args: argparse.Namespace) -> int:
             source = VideoFileSource(path)
             pipeline = Pipeline(config, source.frame_size)
             writer = None
-            observer = None
             if args.video_out is not None:
                 args.video_out.parent.mkdir(parents=True, exist_ok=True)
                 fps = source.fps or 25.0
@@ -117,19 +118,34 @@ def run(args: argparse.Namespace) -> int:
                 )
                 if not writer.isOpened():
                     raise RuntimeError(f"Không tạo được file video: {args.video_out}")
+            if args.show:
+                cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
 
-                def observer(frame, tracks, pl):
-                    status = (
-                        f"t={frame.ts:6.1f}s  IN={pl.in_count}  OUT={pl.out_count}  "
-                        f"queue={pl.last_queue_count}  state={pl.alert.state.value}"
-                    )
-                    writer.write(draw(frame.image, tracks, pl.line_px, pl.polygon_px, status))
+            drawn = {"n": 0}
 
+            def observer(frame, tracks, pl):
+                drawn["n"] += 1
+                status = (
+                    f"t={frame.ts:6.1f}s  IN={pl.in_count}  OUT={pl.out_count}  "
+                    f"queue={pl.last_queue_count}  state={pl.alert.state.value}"
+                )
+                annotated = draw(frame.image, tracks, pl.line_px, pl.polygon_px, status)
+                if writer is not None:
+                    writer.write(annotated)
+                if args.show:
+                    cv2.imshow(WINDOW_NAME, annotated)
+                    if cv2.waitKey(1) & 0xFF == ord("q"):
+                        raise KeyboardInterrupt
+
+            observer_needed = writer is not None or args.show
             try:
-                processed = run_pipeline(pipeline, source.read, detector, sink, observer=observer)
+                run_pipeline(pipeline, source.read, detector, sink, observer=observer if observer_needed else None)
             finally:
+                processed = drawn["n"] if observer_needed else processed
                 if writer is not None:
                     writer.release()
+                if args.show:
+                    cv2.destroyAllWindows()
             source.close()
         else:
             processed = _run_camera(config, detector, sink)
