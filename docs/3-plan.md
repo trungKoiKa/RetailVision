@@ -79,10 +79,10 @@ Tài liệu trả lời: làm gì trước, đang ở đâu. Mỗi phần chỉ 
 
 ## Phần 8 — Triển khai Pi và benchmark (~8 giờ)
 
-- [ ] `.pt` 320, NCNN 320, NCNN 416 trên cùng clip/Pi.
+- [ ] `.pt` 320, NCNN 320, NCNN 416 trên cùng clip/Pi. *(công cụ `evaluation/benchmarks/bench.py` và `export_ncnn.py` đã có, chạy được cả `.pt` và NCNN trên laptop; chưa đo trên Pi)*
 - [ ] Chỉnh tracker theo FPS thật.
 - [ ] FPS toàn luồng, tuổi frame, RAM, nhiệt khi chạy kèm broker.
-- [ ] systemd; reboot tự chạy lại.
+- [ ] systemd; reboot tự chạy lại. *(`retail-edge.service`, `install_edge.sh`, chrony đã viết và kiểm cú pháp; chưa chạy trên Pi)*
 
 **Gate:** bảng benchmark tái hiện được.
 
@@ -133,3 +133,4 @@ Cắt theo thứ tự: settings web → CSV → vai trò MANAGER → NCNN 416 �
 | 2026-10-21 | 5 | Khung firmware PlatformIO: logic thuần `lib/alert_core` (25 test native xanh), task mạng, `main.cpp`; biên dịch `esp32dev` thành công (RAM 13,9%, Flash 59%, không cảnh báo); bản tin C++ `operator-ack`/`status` qua JSON Schema thật | Chưa nạp lên ESP32, chưa thử với broker; `node01/status` cần giờ UTC (xem README firmware) | Bạn đấu mạch, nạp, thử với `fake_publisher` |
 | 2026-10-21 | 6 | Backend Spring: Flyway V001–V003, nhận MQTT (cleanSession=false, ack sau commit, chống trùng event_id), API overview/alerts/devices/health; 54 test xanh (PostgreSQL + Mosquitto thật: trùng event_id, DB lỗi → gửi lại, backend tắt rồi bật vẫn nhận đủ); chạy thử edge giả → backend → DB → API | Chưa thử với Pi thật; chưa đăng nhập | Phần 7: frontend Overview |
 | 2026-10-21 | 7 | Frontend Vite/React: trang Tổng quan; 16 test (vitest), typecheck và build sạch; kiểm trên Chrome với backend thật: hiện OVERLOAD 5 người, tắt backend thì banner lỗi và mọi số liệu thành "—" | Chưa có Login/Footfall/Alerts/Devices (Phần 10) | Phần 8-9 |
+| 2026-10-21 | 8 | Công cụ benchmark (`bench.py`, `export_ncnn.py`, `sysmetrics`), `retail-edge.service`, chrony, `install_edge.sh`, cấu hình camera mẫu; 109 test edge xanh; NCNN 320/416 xuất được và chạy trong pipeline thật trên laptop (320 chỉ thấy 1/3 lượt trên clip VIRAT: cần kiểm kích thước với cảnh thật) | Chưa có số đo Pi, chưa cài thử trên Pi | Phần 9 |

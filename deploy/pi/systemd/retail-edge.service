@@ -1,0 +1,30 @@
+[Unit]
+Description=RetailVision edge (camera, YOLO, MQTT)
+Documentation=https://github.com/trungKoiKa/RetailVision
+# Chờ broker và mạng; chrony giúp đồng hồ đúng trước khi gắn thời gian vào sự kiện
+After=network-online.target mosquitto.service chrony.service
+Wants=network-online.target mosquitto.service chrony.service
+
+[Service]
+Type=simple
+User=rv
+Group=rv
+SupplementaryGroups=video
+WorkingDirectory=/opt/retailvision/edge
+# Mật khẩu MQTT nằm ở đây (chmod 600, không commit): xem deploy/pi/edge.env.example
+EnvironmentFile=/etc/retailvision/edge.env
+ExecStart=/opt/retailvision/edge/.venv/bin/python -m retailvision.app --config /etc/retailvision/edge.yaml
+Restart=on-failure
+RestartSec=5
+# Dừng mềm để edge kịp gửi status OFFLINE
+TimeoutStopSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+# Ultralytics ghi cấu hình/cache vào thư mục này
+Environment=YOLO_CONFIG_DIR=/var/lib/retailvision
+StateDirectory=retailvision
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,45 @@
+# Cấu hình edge chạy camera USB thật trên Pi (chép thành /etc/retailvision/edge.yaml).
+# Đường dẫn tương đối tính từ file này khi chạy từ repo; khi cài bằng install_edge.sh, sửa sang
+# đường dẫn tuyệt đối dưới /opt/retailvision.
+# Vạch và vùng chờ dưới đây CHỈ là điểm bắt đầu: phải vẽ lại theo đúng khung hình của camera trước khi đo.
+site_id: site01
+device_id: edge01
+node_id: node01
+profile: pilot
+config_version: pilot-camera-draft
+
+source:
+  type: camera
+  index: 0
+  width: 1280
+  height: 720
+
+model:
+  # NCNN xuất cố định kích thước: image_size phải bằng kích thước lúc xuất (xem edge/experiments/export_ncnn.py)
+  weights: ../../models/exported/yolov8n_ncnn_320/yolov8n_ncnn_model
+  image_size: 320
+  confidence: 0.35
+  tracker: ../edge/bytetrack-tuned.yaml
+
+counting:
+  line: [[0.45, 0.10], [0.45, 0.90]]
+  deadband_px: 12
+  min_stable_observations: 2
+  a_to_b_direction: IN
+
+queue:
+  polygon: [[0.60, 0.20], [0.95, 0.20], [0.95, 0.90], [0.60, 0.90]]
+  dwell_seconds: 2.0
+
+alert:
+  on_count: 5
+  on_hold_seconds: 60
+  off_count: 3
+  off_hold_seconds: 10
+
+health:
+  stale_seconds: 3
+
+mqtt:
+  host: 127.0.0.1  # broker chạy ngay trên Pi
+  port: 1883
