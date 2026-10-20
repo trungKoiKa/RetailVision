@@ -29,6 +29,9 @@ SemaphoreHandle_t sharedMutex = nullptr;
 char topicState[96];
 char topicAck[96];
 char topicStatus[96];
+#ifdef RV_DEBUG_ECHO
+char topicEcho[96];
+#endif
 char sessionId[rv::kUuidLen + 1];
 uint32_t statusSeq = 0;
 
@@ -56,8 +59,21 @@ size_t buildStatus(char* out, size_t cap, const char* status) {
 void onMessage(char* topic, uint8_t* payload, unsigned int length) {
   if (strcmp(topic, topicState) != 0) return;
   xSemaphoreTake(sharedMutex, portMAX_DELAY);
-  sharedModel->onStatePayload(reinterpret_cast<const char*>(payload), length, millis());
+  const bool valid = sharedModel->onStatePayload(reinterpret_cast<const char*>(payload), length, millis());
+  uint32_t seq = 0;
+  const bool hasSeq = valid && sharedModel->lastSeq(seq);
   xSemaphoreGive(sharedMutex);
+#ifdef RV_DEBUG_ECHO
+  // Chỉ bản debug: báo lại seq của state vừa nhận để Pi đo độ trễ (evaluation/tools/latency_echo.py)
+  if (hasSeq) {
+    char echo[40];
+    snprintf(echo, sizeof(echo), "{\"seq\":%lu}", static_cast<unsigned long>(seq));
+    mqtt.publish(topicEcho, echo);
+  }
+#else
+  (void)hasSeq;
+  (void)seq;
+#endif
 }
 
 void connectMqtt() {
@@ -134,6 +150,9 @@ void networkStart(rv::AlertModel* model, SemaphoreHandle_t mutex) {
   snprintf(topicState, sizeof(topicState), "retailvision/v1/%s/%s/state", SITE_ID, EDGE_ID);
   snprintf(topicAck, sizeof(topicAck), "retailvision/v1/%s/%s/events/operator-ack", SITE_ID, NODE_ID);
   snprintf(topicStatus, sizeof(topicStatus), "retailvision/v1/%s/%s/status", SITE_ID, NODE_ID);
+#ifdef RV_DEBUG_ECHO
+  snprintf(topicEcho, sizeof(topicEcho), "retailvision/v1/%s/%s/debug/latency", SITE_ID, NODE_ID);
+#endif
   randomUuid(sessionId);
   ackQueue = xQueueCreate(kAckQueueLen, sizeof(AckMessage));
 

@@ -48,6 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--events-out", type=Path, help="ghi sự kiện JSONL (mặc định: stdout)")
     parser.add_argument("--video-out", type=Path, help="ghi video đã vẽ vạch, vùng chờ, ID người (chỉ khi xử lý file)")
     parser.add_argument("--show", action="store_true", help="mở cửa sổ xem trực tiếp; nhấn q để dừng")
+    parser.add_argument("--latency-out", type=Path, help="ghi độ trễ từng khung (ms) khi chạy camera, và in p50/p95/max")
     parser.add_argument("--no-mqtt", action="store_true", help="không gửi MQTT dù cấu hình có mục mqtt")
     parser.add_argument("--check-config", action="store_true", help="chỉ kiểm tra cấu hình rồi thoát")
     return parser
@@ -186,7 +187,7 @@ def run(args: argparse.Namespace) -> int:
                     cv2.destroyAllWindows()
             source.close()
         else:
-            processed = _run_camera(config, detector, sink, messenger, settings)
+            processed = _run_camera(config, detector, sink, messenger, settings, args.latency_out)
     except KeyboardInterrupt:
         print("Dừng theo yêu cầu.", file=sys.stderr)
     finally:
@@ -198,13 +199,30 @@ def run(args: argparse.Namespace) -> int:
     return 0
 
 
-def _run_camera(config, detector, sink: _CountingSink, messenger: Optional[EdgeMessenger], settings) -> int:
+def _run_camera(config, detector, sink: _CountingSink, messenger: Optional[EdgeMessenger], settings, latency_out: Optional[Path] = None) -> int:
     """Chạy camera thật cho đến khi nhấn Ctrl+C. Camera mất/chưa cắm thì vào UNKNOWN và tự phục hồi."""
     source = CameraSource(config.source.index, config.source.width, config.source.height)
     try:
-        return run_camera_loop(config, source.read, detector, sink, messenger, settings)
+        ages: Optional[list] = [] if latency_out is not None else None
+        try:
+            return run_camera_loop(config, source.read, detector, sink, messenger, settings, latency_ms=ages)
+        finally:
+            if latency_out is not None and ages:
+                _write_latency(latency_out, ages)
     finally:
         source.close()
+
+
+def _write_latency(path: Path, ages: list) -> None:
+    """Độ trễ camera → state theo từng khung; kết luận NFR-04 (p95 ≤ 1 s) lấy từ p95 này khi chạy trực tiếp trên Pi."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("age_ms\n" + "\n".join(str(a) for a in ages) + "\n", encoding="utf-8")
+    ordered = sorted(ages)
+    p95 = ordered[min(len(ordered) - 1, max(0, -(-95 * len(ordered) // 100) - 1))]
+    print(
+        f"Độ trễ camera→state: n={len(ages)} p50={ordered[len(ordered) // 2]} ms p95={p95} ms max={ordered[-1]} ms",
+        file=sys.stderr,
+    )
 
 
 def main(argv: Optional[list[str]] = None) -> int:

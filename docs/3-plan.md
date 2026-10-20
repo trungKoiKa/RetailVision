@@ -108,8 +108,8 @@ Tài liệu trả lời: làm gì trước, đang ở đâu. Mỗi phần chỉ 
 
 ## Phần 11 — Đánh giá (~12 giờ)
 
-- [ ] Thu clip có đồng ý, tách dev/test theo buổi; gán nhãn.
-- [ ] Đo theo [evaluation/README.md](../evaluation/README.md); ghi số thật kể cả khi không đạt.
+- [ ] Thu clip có đồng ý, tách dev/test theo buổi; gán nhãn. *(công cụ `record`, `calibrate`, `label`, `label_queue` và quy trình ở `evaluation/scenarios/` đã có; chưa có clip nào)*
+- [ ] Đo theo [evaluation/README.md](../evaluation/README.md); ghi số thật kể cả khi không đạt. *(công cụ `evaluate.py`, `latency_echo.py`, `--latency-out` đã có và được kiểm bằng dữ liệu dựng tay; chưa có số đo thật)*
 
 **Gate:** kết quả trên tập test độc lập.
 
@@ -141,3 +141,4 @@ Cắt theo thứ tự: settings web → CSV → vai trò MANAGER → NCNN 416 �
 | 2026-10-21 | 9 | Phục hồi lỗi: camera mất/chưa cắm (UNKNOWN, tự phục hồi), broker dừng/restart, backend tắt, DB sập thật, broker lên muộn; sửa 3 lỗi thật (edge thoát khi chưa có camera, Ultralytics gọi ra Internet, backend phục hồi chậm khi DB sập); edge 127 test, backend 59 test, frontend 18 test xanh | Chưa thử trên Pi/camera/ESP32 thật | Phần 10 |
 | 2026-10-21 | 10b | Đổi ngưỡng từ web (FR-09, P1): backend `PUT /api/settings` (PENDING/APPLIED/REJECTED/UNCONFIRMED), edge áp dụng nguyên bộ, revision cũ bị từ chối, lệnh trùng không áp dụng hai lần, lưu qua restart; edge 164 test, backend 99 test; kiểm chéo ngôn ngữ thật: edge Python thật ↔ Mosquitto ↔ backend Java thật, đổi hai lần qua API đều APPLIED, file lưu và `settings_revision` trong state khớp | Chưa có trang web (10c) | 10c |
 | 2026-10-21 | 10c | Trang web: Đăng nhập, Lượt vào/ra (biểu đồ, bảng, gap xám, CSV), Cảnh báo, Thiết bị + đổi ngưỡng, Tài khoản; 59 test vitest; kiểm trên Chrome với hệ thống thật: đăng nhập, báo cáo có 6 khung xám và không có cột 0, đổi ngưỡng được edge thật áp dụng (revision 1). Test phát hiện và sửa một lỗi thật: `queryClient.clear()` làm giao diện không cập nhật sau đăng nhập/đăng xuất | OLED (P1) chưa làm; chưa có Pi thật | Phần 11 |
+| 2026-10-21 | 11 | Công cụ đánh giá: `metrics.py` (sai số đếm từng hướng, MAE vùng chờ, precision/recall cảnh báo ±3 s bằng chính máy trạng thái của edge, khoảng tin cậy Wilson, p50/p95), `evaluate.py` (manifest dev/test → báo cáo, cảnh báo cỡ mẫu nhỏ, không kết luận khi thiếu dữ liệu), `label_queue.py`, `record.py` (video đúng thời gian thực), `calibrate.py` (vạch/vùng → YAML, mũi tên chiều vào), đo độ trễ (`--latency-out`, firmware echo + `latency_echo.py`); edge 210 test, firmware 26 test và build `esp32dev_debug`; chạy thử `evaluate.py` trên kết quả thật của clip VIRAT (3 lượt IN, ghi rõ mẫu nhỏ) | Chưa có clip và nhãn chính thức, chưa có số đo trên Pi; nhãn VIRAT do AI ước lượng | Phần 12 |
