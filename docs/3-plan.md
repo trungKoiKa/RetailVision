@@ -104,6 +104,8 @@ Tài liệu trả lời: làm gì trước, đang ở đâu. Mỗi phần chỉ 
 
 **Gate:** báo cáo không biến thiếu dữ liệu thành 0; gọi thẳng API sai quyền bị chặn.
 
+*Trạng thái:* đạt ở mức tự động và trên Chrome với hệ thống thật (backend + PostgreSQL + Mosquitto + edge Python thật); chưa có dữ liệu từ Pi/camera thật. OLED (P1) chưa làm.
+
 ## Phần 11 — Đánh giá (~12 giờ)
 
 - [ ] Thu clip có đồng ý, tách dev/test theo buổi; gán nhãn.
@@ -138,3 +140,4 @@ Cắt theo thứ tự: settings web → CSV → vai trò MANAGER → NCNN 416 �
 | 2026-10-21 | 8 | Công cụ benchmark (`bench.py`, `export_ncnn.py`, `sysmetrics`), `retail-edge.service`, chrony, `install_edge.sh`, cấu hình camera mẫu; 109 test edge xanh; NCNN 320/416 xuất được và chạy trong pipeline thật trên laptop (320 chỉ thấy 1/3 lượt trên clip VIRAT: cần kiểm kích thước với cảnh thật) | Chưa có số đo Pi, chưa cài thử trên Pi | Phần 9 |
 | 2026-10-21 | 9 | Phục hồi lỗi: camera mất/chưa cắm (UNKNOWN, tự phục hồi), broker dừng/restart, backend tắt, DB sập thật, broker lên muộn; sửa 3 lỗi thật (edge thoát khi chưa có camera, Ultralytics gọi ra Internet, backend phục hồi chậm khi DB sập); edge 127 test, backend 59 test, frontend 18 test xanh | Chưa thử trên Pi/camera/ESP32 thật | Phần 10 |
 | 2026-10-21 | 10b | Đổi ngưỡng từ web (FR-09, P1): backend `PUT /api/settings` (PENDING/APPLIED/REJECTED/UNCONFIRMED), edge áp dụng nguyên bộ, revision cũ bị từ chối, lệnh trùng không áp dụng hai lần, lưu qua restart; edge 164 test, backend 99 test; kiểm chéo ngôn ngữ thật: edge Python thật ↔ Mosquitto ↔ backend Java thật, đổi hai lần qua API đều APPLIED, file lưu và `settings_revision` trong state khớp | Chưa có trang web (10c) | 10c |
+| 2026-10-21 | 10c | Trang web: Đăng nhập, Lượt vào/ra (biểu đồ, bảng, gap xám, CSV), Cảnh báo, Thiết bị + đổi ngưỡng, Tài khoản; 59 test vitest; kiểm trên Chrome với hệ thống thật: đăng nhập, báo cáo có 6 khung xám và không có cột 0, đổi ngưỡng được edge thật áp dụng (revision 1). Test phát hiện và sửa một lỗi thật: `queryClient.clear()` làm giao diện không cập nhật sau đăng nhập/đăng xuất | OLED (P1) chưa làm; chưa có Pi thật | Phần 11 |

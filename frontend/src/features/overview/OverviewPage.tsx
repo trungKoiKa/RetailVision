@@ -21,6 +21,7 @@ const UNKNOWN_LIVE: Live = {
   age_seconds: null,
   stale: true,
   config_version: null,
+  settings_revision: null,
 };
 
 export function OverviewPage() {

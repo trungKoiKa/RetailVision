@@ -16,6 +16,7 @@ function overview(patch: Partial<Overview> = {}, live: Partial<Overview["live"]>
       age_seconds: 0.8,
       stale: false,
       config_version: "pilot-1",
+      settings_revision: 0,
       ...live,
     },
     last_alert: null,

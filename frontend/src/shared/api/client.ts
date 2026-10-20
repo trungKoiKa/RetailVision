@@ -2,10 +2,13 @@
 
 export class ApiError extends Error {
   readonly status: number;
+  /** Thông báo backend trả về (tiếng Việt, hiển thị được cho người dùng), nếu có. */
+  readonly serverMessage: string | null;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, serverMessage: string | null = null) {
     super(message);
     this.status = status;
+    this.serverMessage = serverMessage;
   }
 }
 
@@ -33,7 +36,14 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
   }
   if (!response.ok) {
-    throw new ApiError(response.status, `${method} ${path} -> ${response.status}`);
+    let serverMessage: string | null = null;
+    try {
+      const body = (await response.json()) as { message?: unknown };
+      if (typeof body.message === "string") serverMessage = body.message;
+    } catch {
+      // không phải JSON: bỏ qua
+    }
+    throw new ApiError(response.status, `${method} ${path} -> ${response.status}`, serverMessage);
   }
   if (response.status === 204) {
     return undefined as T;
