@@ -7,7 +7,7 @@ Pipeline: khung hình → YOLOv8n + ByteTrack → đếm vạch, vùng chờ, c�
 ```bash
 cd edge
 python -m venv .venv
-.venv/Scripts/python.exe -m pip install -r requirements.txt -r requirements-dev.txt
+.venv/Scripts/python.exe -m pip install -r requirements-dev.txt   # chạy test (không cần ultralytics)
 .venv/Scripts/python.exe -m pip install "ultralytics==8.3.*"
 ```
 

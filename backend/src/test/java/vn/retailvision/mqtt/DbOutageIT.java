@@ -76,6 +76,8 @@ class DbOutageIT {
         registry.add("retailvision.mqtt.host", () -> "127.0.0.1");
         registry.add("retailvision.mqtt.port", MosquittoBroker::port);
         registry.add("retailvision.mqtt.username", () -> "");
+        // client id riêng mỗi context: phiên cleanSession=false trên broker dùng chung không được lẫn bản tin của test khác
+        registry.add("retailvision.mqtt.client-id", () -> "backend01-" + java.util.UUID.randomUUID());
     }
 
     @Autowired

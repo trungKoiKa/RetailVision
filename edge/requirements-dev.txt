@@ -1,1 +1,5 @@
+# Chỉ cần để chạy test (test hợp đồng MQTT dùng jsonschema và referencing)
+-r requirements-core.txt
 pytest==9.1.1
+jsonschema==4.26.0
+referencing==0.37.0

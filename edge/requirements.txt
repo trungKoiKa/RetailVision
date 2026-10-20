@@ -1,7 +1,3 @@
 # Phụ thuộc chạy edge. Ultralytics kéo theo torch; bản đã chạy trên laptop Windows.
+-r requirements-core.txt
 ultralytics==8.3.253
-pyyaml==6.0.3
-pydantic==2.14.1
-numpy==2.5.4
-opencv-python-headless==5.0.0
-paho-mqtt==2.1.0

@@ -1,0 +1,62 @@
+# Máy chủ LAN: PostgreSQL + backend + web (nginx). Broker Mosquitto nằm trên Pi (xem deploy/pi/).
+#
+#   cp deploy/server/.env.example deploy/server/.env      # rồi sửa mật khẩu, IP broker
+#   docker compose --env-file deploy/server/.env -f deploy/server/compose.yaml up -d --build
+#
+# Thử không cần Pi: thêm  -f deploy/server/compose.demo.yaml  (broker và edge giả chạy cùng máy).
+name: retailvision
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: retailvision
+      POSTGRES_USER: retailvision
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Đặt POSTGRES_PASSWORD trong deploy/server/.env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U retailvision -d retailvision"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    # không mở cổng ra ngoài: chỉ backend (cùng mạng Compose) truy cập được
+
+  backend:
+    build:
+      context: ../../backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/retailvision
+      SPRING_DATASOURCE_USERNAME: retailvision
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      RV_MQTT_HOST: ${RV_MQTT_HOST:?Đặt RV_MQTT_HOST (IP của Pi chạy Mosquitto) trong deploy/server/.env}
+      RV_MQTT_PORT: ${RV_MQTT_PORT:-1883}
+      RV_MQTT_BACKEND_USER: ${RV_MQTT_BACKEND_USER:-backend01}
+      RV_MQTT_BACKEND_PASS: ${RV_MQTT_BACKEND_PASS:-}
+      RV_ADMIN_USER: ${RV_ADMIN_USER:-}
+      RV_ADMIN_PASS: ${RV_ADMIN_PASS:-}
+    healthcheck:
+      # JRE không có curl: thử mở TCP tới cổng ứng dụng
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  web:
+    build:
+      context: ../../frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "${WEB_PORT:-8088}:80"
+
+volumes:
+  pgdata:

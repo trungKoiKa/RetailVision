@@ -1,0 +1,28 @@
+# Lớp phủ để chạy thử TOÀN BỘ phần phía máy chủ khi chưa có Pi: thêm Mosquitto (không mật khẩu, CHỈ để demo)
+# và một edge giả phát state/sự kiện đúng contract (kịch bản overload: NORMAL → OVERLOAD → NORMAL, lặp).
+#
+#   docker compose --env-file deploy/server/.env -f deploy/server/compose.yaml -f deploy/server/compose.demo.yaml up -d --build
+#
+# Không dùng cho vận hành thật: broker demo cho phép mọi người publish.
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    volumes:
+      - ./demo/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+  fake-edge:
+    build:
+      context: ../..
+      dockerfile: deploy/server/fake-edge.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    command: ["--scenario", "overload", "--host", "mosquitto", "--hold", "40", "--period", "90"]
+
+  backend:
+    depends_on:
+      mosquitto:
+        condition: service_started
+      postgres:
+        condition: service_healthy
