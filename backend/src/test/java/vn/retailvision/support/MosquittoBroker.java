@@ -60,6 +60,11 @@ public final class MosquittoBroker {
         }
     }
 
+    /** Đường dẫn file chạy mosquitto, hoặc null nếu không tìm thấy. */
+    public static Path binary() {
+        return BIN;
+    }
+
     private static Path findBinary() {
         String fromEnv = System.getenv("RV_MOSQUITTO_BIN");
         if (fromEnv != null && Files.isRegularFile(Path.of(fromEnv))) {

@@ -6,6 +6,7 @@ test analytics không cần cài torch.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Protocol
 
@@ -16,18 +17,29 @@ from retailvision.core.types import Track
 PERSON_CLASS_ID = 0
 
 
+def configure_offline() -> None:
+    """Không cho Ultralytics gọi ra Internet: nó kiểm DNS tới Cloudflare/Google lúc import và gửi số liệu
+    ẩn danh khi thấy mạng. Edge phải chạy được khi mất WAN và không gửi gì ra ngoài (NFR-08, NFR-10)."""
+    os.environ.setdefault("YOLO_OFFLINE", "true")
+
+
 class Detector(Protocol):
     def process(self, image: np.ndarray) -> list[Track]: ...
 
 
 class YoloTracker:
     def __init__(self, weights: Path, image_size: int, confidence: float, tracker: str) -> None:
+        configure_offline()  # phải đặt trước khi import ultralytics
         from ultralytics import YOLO  # import muộn: chỉ cần khi chạy thật
 
         self._model = YOLO(str(weights), task="detect")
         self._image_size = image_size
         self._confidence = confidence
         self._tracker = tracker
+
+    def reset(self) -> None:
+        """Bỏ bộ theo dõi hiện tại (sau khi mất camera) để không nối ID cũ qua khoảng gián đoạn."""
+        self._model.predictor = None
 
     def process(self, image: np.ndarray) -> list[Track]:
         results = self._model.track(

@@ -22,8 +22,9 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-# Ultralytics ghi cấu hình/cache vào thư mục này
+# Ultralytics ghi cấu hình/cache vào thư mục này; YOLO_OFFLINE: không gọi ra Internet, không gửi số liệu
 Environment=YOLO_CONFIG_DIR=/var/lib/retailvision
+Environment=YOLO_OFFLINE=true
 StateDirectory=retailvision
 
 [Install]

@@ -5,6 +5,12 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/retailvision}
     username: ${SPRING_DATASOURCE_USERNAME:retailvision}
     password: ${SPRING_DATASOURCE_PASSWORD:}
+    hikari:
+      # DB tắt/treo thì báo lỗi sau vài giây (không chờ vô hạn) để listener không ack và broker gửi lại
+      connection-timeout: 5000
+      data-source-properties:
+        connectTimeout: 5
+        socketTimeout: 10
   jpa:
     open-in-view: false
     hibernate:
