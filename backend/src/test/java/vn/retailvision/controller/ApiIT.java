@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import vn.retailvision.mqtt.MqttRouter;
 import vn.retailvision.support.ContractExamples;
@@ -25,6 +26,7 @@ import vn.retailvision.support.PostgresIT;
 import vn.retailvision.service.queue.LiveStateCache;
 
 @AutoConfigureMockMvc
+@WithMockUser(roles = "MANAGER")
 @Import(ApiIT.ClockConfig.class)
 class ApiIT extends PostgresIT {
 
