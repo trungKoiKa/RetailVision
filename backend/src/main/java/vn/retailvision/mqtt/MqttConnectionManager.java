@@ -29,7 +29,7 @@ import vn.retailvision.config.RetailVisionProperties;
  */
 @Component
 @ConditionalOnProperty(prefix = "retailvision.mqtt", name = "enabled", havingValue = "true", matchIfMissing = true)
-public class MqttConnectionManager implements MqttCallbackExtended, SmartLifecycle {
+public class MqttConnectionManager implements MqttCallbackExtended, SmartLifecycle, MqttPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(MqttConnectionManager.class);
 
@@ -57,6 +57,19 @@ public class MqttConnectionManager implements MqttCallbackExtended, SmartLifecyc
     public boolean isConnected() {
         MqttClient c = client;
         return c != null && c.isConnected();
+    }
+
+    @Override
+    public void publish(String topic, byte[] payload, int qos, boolean retain) {
+        MqttClient c = client;
+        if (c == null || !c.isConnected()) {
+            throw new PublishFailedException("Chưa nối được broker MQTT", null);
+        }
+        try {
+            c.publish(topic, payload, qos, retain);
+        } catch (MqttException e) {
+            throw new PublishFailedException("Gửi MQTT thất bại: " + e.getMessage(), e);
+        }
     }
 
     // --- vòng đời --------------------------------------------------------

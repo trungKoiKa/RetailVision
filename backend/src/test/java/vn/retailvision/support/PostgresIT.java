@@ -35,7 +35,7 @@ public abstract class PostgresIT {
     void cleanTables() {
         jdbc.execute("""
                 truncate table telemetry_minute, alert_transition, alert_event, crossing_event,
-                    edge_session, device_status, app_user restart identity cascade
+                    edge_session, device_status, app_user, settings_revision restart identity cascade
                 """);
     }
 

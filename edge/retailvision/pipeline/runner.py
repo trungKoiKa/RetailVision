@@ -18,11 +18,13 @@ from retailvision.analytics.crossing import LineCounter
 from retailvision.analytics.geometry import to_pixels
 from retailvision.analytics.queue import QueueZone
 from retailvision.config.loader import EdgeConfig
+from retailvision.config.settings import OperatingSettings
 from retailvision.core.types import AlertTransition, CrossingEvent, Track
 from retailvision.pipeline.capture import Frame
 
 if TYPE_CHECKING:
     from retailvision.messaging.bridge import EdgeMessenger
+    from retailvision.pipeline.settings_service import SettingsService
 
 
 class Detector(Protocol):
@@ -30,8 +32,16 @@ class Detector(Protocol):
 
 
 class Pipeline:
-    def __init__(self, config: EdgeConfig, frame_size: tuple[int, int]) -> None:
+    def __init__(
+        self,
+        config: EdgeConfig,
+        frame_size: tuple[int, int],
+        settings: Optional[OperatingSettings] = None,
+        settings_revision: int = 0,
+    ) -> None:
         self.frame_size = frame_size
+        self.settings_revision = settings_revision
+        s = settings or OperatingSettings.from_config(config)
         w, h = frame_size
         line = to_pixels(config.counting.line, w, h)
         self.line_px = (line[0], line[1])
@@ -42,21 +52,27 @@ class Pipeline:
             min_stable_observations=config.counting.min_stable_observations,
             a_to_b_direction=config.counting.a_to_b_direction,
         )
-        self.zone = QueueZone(self.polygon_px, config.queue.dwell_seconds)
-        a = config.alert
-        self.alert = AlertStateMachine(
-            AlertSettings(
-                on_count=a.on_count,
-                on_hold_seconds=a.on_hold_seconds,
-                off_count=a.off_count,
-                off_hold_seconds=a.off_hold_seconds,
-            )
-        )
+        self.zone = QueueZone(self.polygon_px, s.dwell_seconds)
+        self.alert = AlertStateMachine(self._alert_settings(s))
         self._last_sample_second: Optional[int] = None
         # tổng hợp để hiển thị; không ghi ra file
         self.in_count = 0
         self.out_count = 0
         self.last_queue_count = 0
+
+    @staticmethod
+    def _alert_settings(s: OperatingSettings) -> AlertSettings:
+        return AlertSettings(
+            on_count=s.on_count,
+            on_hold_seconds=s.on_hold_seconds,
+            off_count=s.off_count,
+            off_hold_seconds=s.off_hold_seconds,
+        )
+
+    def apply_settings(self, s: OperatingSettings, ts: float) -> list[dict]:
+        """Áp dụng nguyên bộ ngưỡng mới. Cảnh báo đang mở kết thúc CONFIG_CHANGED, timer tính lại."""
+        self.zone.set_dwell(s.dwell_seconds)
+        return [_alert_event(t) for t in self.alert.apply_settings(self._alert_settings(s), ts)]
 
     def step(self, tracks: list[Track], ts: float) -> list[dict]:
         """Xử lý một khung hình, trả về các sự kiện dạng dict để ghi ra.
@@ -120,6 +136,26 @@ def apply_acks(pipeline: Pipeline, messenger: "Optional[EdgeMessenger]", sink: J
             messenger.publish_events(ts, events)
 
 
+def apply_settings_commands(
+    pipeline: Pipeline,
+    messenger: "Optional[EdgeMessenger]",
+    sink: JsonlSink,
+    settings: "Optional[SettingsService]",
+    ts: float,
+) -> None:
+    """Áp dụng lệnh đổi ngưỡng từ backend và trả kết quả (APPLIED/REJECTED) qua settings/result."""
+    if messenger is None or settings is None:
+        return
+    for command in messenger.poll_settings():
+        events, result = settings.handle(command, pipeline, ts)
+        if result is None:
+            continue
+        if events:
+            sink.write(events)
+            messenger.publish_events(ts, events)
+        messenger.publish_settings_result(ts, result.request_id, result.result, result.revision, result.reason)
+
+
 def process_frame(
     pipeline: Pipeline,
     detector: Detector,
@@ -127,9 +163,11 @@ def process_frame(
     messenger: "Optional[EdgeMessenger]",
     frame: Frame,
     frame_age_ms: Callable[[Frame], int] = lambda frame: 0,
+    settings: "Optional[SettingsService]" = None,
 ) -> list[Track]:
-    """Xử lý một khung hình: ACK đang chờ → phát hiện + theo dõi → phân tích → ghi/gửi sự kiện."""
+    """Xử lý một khung hình: ACK và lệnh đổi ngưỡng đang chờ → phát hiện + theo dõi → phân tích → ghi/gửi sự kiện."""
     apply_acks(pipeline, messenger, sink, frame.ts)
+    apply_settings_commands(pipeline, messenger, sink, settings, frame.ts)
     tracks = detector.process(frame.image)
     events = pipeline.step(tracks, frame.ts)
     sink.write(events)
@@ -145,6 +183,7 @@ def run_pipeline(
     sink: JsonlSink,
     observer: Optional[Callable[[Frame, list[Track], Pipeline], None]] = None,
     messenger: "Optional[EdgeMessenger]" = None,
+    settings: "Optional[SettingsService]" = None,
 ) -> int:
     """Lặp đến khi nguồn hết khung hình (video) hoặc dừng (camera). Trả về số khung đã xử lý.
 
@@ -156,7 +195,7 @@ def run_pipeline(
         frame = read_frame()
         if frame is None:
             break
-        tracks = process_frame(pipeline, detector, sink, messenger, frame)
+        tracks = process_frame(pipeline, detector, sink, messenger, frame, settings=settings)
         processed += 1
         if observer:
             observer(frame, tracks, pipeline)
@@ -179,6 +218,7 @@ def run_camera_loop(
     detector: Detector,
     sink: JsonlSink,
     messenger: "Optional[EdgeMessenger]" = None,
+    settings: "Optional[SettingsService]" = None,
     *,
     clock: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
@@ -193,7 +233,10 @@ def run_camera_loop(
     - Độ phân giải thật của camera có thể khác cấu hình: dựng lại pipeline theo kích thước khung hình.
     `clock` phải cùng miền thời gian với `Frame.ts` (CameraSource dùng time.monotonic).
     """
-    pipeline = Pipeline(config, (config.source.width, config.source.height))
+    def build(size):
+        return Pipeline(config, size, settings.current if settings else None, settings.revision if settings else 0)
+
+    pipeline = build((config.source.width, config.source.height))
     stale_s = config.health.stale_seconds
     last_frame_at = clock()
     is_stale = False
@@ -205,7 +248,7 @@ def run_camera_loop(
             height, width = frame.image.shape[:2]
             if (width, height) != pipeline.frame_size:
                 print(f"Độ phân giải thật {width}x{height}; dựng lại vạch và vùng chờ theo kích thước này", file=sys.stderr)
-                pipeline = Pipeline(config, (width, height))
+                pipeline = build((width, height))
             if is_stale:
                 reset = getattr(detector, "reset", None)
                 if reset is not None:
@@ -215,6 +258,7 @@ def run_camera_loop(
             process_frame(
                 pipeline, detector, sink, messenger, frame,
                 frame_age_ms=lambda f: max(0, int((clock() - f.ts) * 1000)),
+                settings=settings,
             )
             processed += 1
         else:
@@ -226,6 +270,7 @@ def run_camera_loop(
                     messenger.publish_events(now, events)
             if messenger is not None:
                 apply_acks(pipeline, messenger, sink, now)
+                apply_settings_commands(pipeline, messenger, sink, settings, now)
                 messenger.on_idle(now, pipeline)
         sleep(CAMERA_POLL_S)
     return processed

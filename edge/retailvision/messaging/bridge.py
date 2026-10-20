@@ -66,6 +66,8 @@ class EdgeMessenger:
         self._last_state_second: Optional[int] = None
         self._last_observed_ts: Optional[float] = None
         self._telemetry = MinuteAggregator()
+        self._acks: list[dict] = []
+        self._settings: list[dict] = []
 
     def attach(self, link: Link) -> None:
         """Gắn kết nối sau khi tạo (kết nối cần will/hello do messenger dựng)."""
@@ -163,21 +165,52 @@ class EdgeMessenger:
             queue_count=pipeline.last_queue_count,
             alert_id=alert.alert_id,
             acked=alert.acked,
+            settings_revision=pipeline.settings_revision,
         )
         self._link.publish(Message(self._topics.state, payload, qos=STATE_QOS))
 
+    def publish_settings_result(self, ts: float, request_id: str, result: str, revision: int, reason) -> None:
+        payload = self._factory.settings_result(self.wall(ts), request_id, result, revision, reason)
+        self._link.publish(Message(self._topics.settings_result, payload, qos=EVENT_QOS))
+
     # --- nhận ------------------------------------------------------------
+
+    def _drain(self) -> None:
+        """Phân loại bản tin đến theo topic vào hai hàng riêng, để việc đọc ACK không nuốt lệnh settings và ngược lại."""
+        while not self._link.inbox.empty():
+            topic, raw = self._link.inbox.get_nowait()
+            if topic == self._topics.operator_ack:
+                ack = parse_operator_ack(raw, self._topics.node_id)
+                if ack is None:
+                    print(f"MQTT: bỏ operator-ack không hợp lệ: {raw[:120]!r}", file=sys.stderr)
+                else:
+                    self._acks.append(ack)
+            elif topic == self._topics.settings_set:
+                command = self._parse_settings(raw)
+                if command is not None:
+                    self._settings.append(command)
 
     def poll_acks(self) -> list[dict]:
         """ACK hợp lệ từ ESP32 đã nhận kể từ lần gọi trước. Bản tin sai bị bỏ và ghi log."""
-        acks: list[dict] = []
-        while not self._link.inbox.empty():
-            topic, raw = self._link.inbox.get_nowait()
-            if topic != self._topics.operator_ack:
-                continue
-            ack = parse_operator_ack(raw, self._topics.node_id)
-            if ack is None:
-                print(f"MQTT: bỏ operator-ack không hợp lệ: {raw[:120]!r}", file=sys.stderr)
-                continue
-            acks.append(ack)
+        self._drain()
+        acks, self._acks = self._acks, []
         return acks
+
+    def poll_settings(self) -> list[dict]:
+        """Lệnh settings/set nhận được kể từ lần gọi trước (đã parse JSON, chưa kiểm giá trị)."""
+        self._drain()
+        commands, self._settings = self._settings, []
+        return commands
+
+    def _parse_settings(self, raw: bytes) -> Optional[dict]:
+        try:
+            data = json.loads(raw)
+        except (ValueError, UnicodeDecodeError):
+            print(f"MQTT: bỏ settings/set không phải JSON: {raw[:120]!r}", file=sys.stderr)
+            return None
+        if not isinstance(data, dict):
+            return None
+        if data.get("site_id") != self._factory.site_id or data.get("device_id") != self._factory.device_id:
+            print("MQTT: bỏ settings/set gửi cho thiết bị khác", file=sys.stderr)
+            return None
+        return data

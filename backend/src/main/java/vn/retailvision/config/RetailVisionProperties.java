@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record RetailVisionProperties(
         @DefaultValue("Asia/Ho_Chi_Minh") ZoneId timezone,
         @DefaultValue("5") int staleSeconds,
+        @DefaultValue("30") int settingsTimeoutSeconds,
         Mqtt mqtt,
         @DefaultValue Admin admin) {
 

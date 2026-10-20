@@ -171,6 +171,19 @@ class AuthIT extends PostgresIT {
     }
 
     @Test
+    void settingsEndpointsRequireLoginAndCsrf() {
+        assertThat(api.get("/api/settings").statusCode()).isEqualTo(401);
+        HttpApi manager = loggedIn("manager1", "manager-pass-1");
+        assertThat(manager.get("/api/settings").statusCode()).isEqualTo(200);
+        String body = "{\"dwell_seconds\":2,\"on_count\":5,\"on_hold_seconds\":60,\"off_count\":3,\"off_hold_seconds\":10}";
+        // không có header CSRF: bị chặn trước khi chạm tới nghiệp vụ
+        assertThat(manager.postWithoutCsrf("/api/settings", Map.of()).statusCode()).isIn(403, 405);
+        // có CSRF và đã đăng nhập: vượt qua lớp bảo mật, tới nghiệp vụ (ở context này MQTT tắt nên 503, không phải 401/403)
+        assertThat(manager.put("/api/settings", Map.of("dwell_seconds", 2, "on_count", 5, "on_hold_seconds", 60, "off_count", 3, "off_hold_seconds", 10)).statusCode()).isEqualTo(503);
+        assertThat(body).isNotEmpty();
+    }
+
+    @Test
     void passwordsAreStoredAsBcryptAndNeverReturned() {
         HttpApi admin = loggedIn("admin1", "admin-pass-1");
         String hash = jdbc.queryForObject("select password_hash from app_user where username = 'manager1'", String.class);

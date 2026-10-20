@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import org.testcontainers.containers.ContainerLaunchException;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.utility.DockerImageName;
@@ -26,29 +27,34 @@ public final class DockerMosquitto implements AutoCloseable {
             max_queued_messages 1000
             """;
 
-    private final int hostPort;
-    private final GenericContainer<?> container;
-
-    public DockerMosquitto() {
-        try (ServerSocket s = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
-            this.hostPort = s.getLocalPort();
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-        this.container = new GenericContainer<>(DockerImageName.parse("eclipse-mosquitto:2"))
-                .withExposedPorts(1883)
-                .withCopyToContainer(Transferable.of(CONF), "/mosquitto/config/mosquitto.conf")
-                .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig()
-                        .withPortBindings(new PortBinding(Ports.Binding.bindPort(hostPort), new ExposedPort(1883))));
-    }
+    private int hostPort;
+    private GenericContainer<?> container;
 
     public int port() {
         return hostPort;
     }
 
+    /** Khởi động trên một cổng trống; nếu cổng bị tiến trình khác chiếm trước khi Docker gắn thì thử cổng khác. */
     public void start() {
-        container.start();
-        awaitPort();
+        ContainerLaunchException last = null;
+        for (int attempt = 0; attempt < 5; attempt++) {
+            hostPort = freePort();
+            final int port = hostPort;
+            container = new GenericContainer<>(DockerImageName.parse("eclipse-mosquitto:2"))
+                    .withExposedPorts(1883)
+                    .withCopyToContainer(Transferable.of(CONF), "/mosquitto/config/mosquitto.conf")
+                    .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig()
+                            .withPortBindings(new PortBinding(Ports.Binding.bindPort(port), new ExposedPort(1883))));
+            try {
+                container.start();
+                awaitPort();
+                return;
+            } catch (ContainerLaunchException e) {
+                last = e;
+                container.stop();
+            }
+        }
+        throw last;
     }
 
     /** SIGTERM (chờ tối đa 10 s): broker lưu persistence rồi thoát. */
@@ -60,6 +66,14 @@ public final class DockerMosquitto implements AutoCloseable {
     public void restart() {
         container.getDockerClient().startContainerCmd(container.getContainerId()).exec();
         awaitPort();
+    }
+
+    private static int freePort() {
+        try (ServerSocket s = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
+            return s.getLocalPort();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private void awaitPort() {
@@ -81,6 +95,8 @@ public final class DockerMosquitto implements AutoCloseable {
 
     @Override
     public void close() {
-        container.stop();
+        if (container != null) {
+            container.stop();
+        }
     }
 }

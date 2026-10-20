@@ -17,7 +17,7 @@ Sau đó:
 
 1. Đưa model NCNN vào `/opt/retailvision/models/` (xuất bằng `edge/experiments/export_ncnn.py` trên laptop hoặc trên Pi, rồi chép thư mục `yolov8n_ncnn_320/`). Đường dẫn trong `/etc/retailvision/edge.yaml` phải trỏ tới thư mục đó, và `model.image_size` phải bằng kích thước lúc xuất.
 2. Sửa `/etc/retailvision/edge.env` (mật khẩu `edge01`), `chmod 600`.
-3. Vẽ lại vạch và vùng chờ trong `edge.yaml` cho đúng khung hình camera thật.
+3. Vẽ lại vạch và vùng chờ trong `edge.yaml` cho đúng khung hình camera thật, và đặt `settings_file: /var/lib/retailvision/settings.json` (ngưỡng đổi từ web được lưu ở đây).
 4. `sudo systemctl start retail-edge` rồi `journalctl -u retail-edge -f`.
 
 Kiểm cấu hình trước khi chạy: `/opt/retailvision/edge/.venv/bin/python -m retailvision.app --config /etc/retailvision/edge.yaml --check-config` (chạy trong `/opt/retailvision/edge`).

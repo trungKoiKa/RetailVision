@@ -43,3 +43,7 @@ health:
 mqtt:
   host: 127.0.0.1  # broker chạy ngay trên Pi
   port: 1883
+
+# Nơi lưu ngưỡng đã đổi từ web (settings/set) để sống sót qua restart. Trên Pi dùng /var/lib/retailvision/settings.json
+# (thư mục này do systemd tạo: StateDirectory=retailvision). Không khai báo thì ngưỡng đổi từ web mất khi restart.
+settings_file: ../../data/runtime/edge-settings.json

@@ -16,6 +16,11 @@ class QueueZone:
         self._dwell = dwell_seconds
         self._entered_at: dict[int, float] = {}
 
+    def set_dwell(self, dwell_seconds: float) -> None:
+        if dwell_seconds < 0:
+            raise ValueError("dwell_seconds không được âm")
+        self._dwell = dwell_seconds
+
     def update(self, tracks: list[Track], ts: float) -> int:
         """Trả về số người đủ điều kiện ở thời điểm ts.
 

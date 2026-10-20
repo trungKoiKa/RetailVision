@@ -73,7 +73,7 @@ class World:
         self.resets += 1
 
 
-def run(tmp_path, world, plan):
+def run(tmp_path, world, plan, settings=None):
     """plan: danh sách (giây_từ_đầu, hành_động) thực hiện khi đồng hồ giả tới mốc đó."""
     cfg = tmp_path / "site.yaml"
     cfg.write_text(CONFIG, encoding="utf-8")
@@ -94,7 +94,7 @@ def run(tmp_path, world, plan):
         return not pending
 
     # hành động cuối cùng đánh dấu kết thúc
-    run_camera_loop(config, world.read, world, JsonlSink(sink_stream), messenger,
+    run_camera_loop(config, world.read, world, JsonlSink(sink_stream), messenger, settings,
                     clock=world.clock, sleep=world.sleep, should_stop=should_stop)
     events = [json.loads(l) for l in sink_stream.getvalue().splitlines()]
     return link, events
@@ -256,3 +256,18 @@ def test_camera_source_read_returns_none_without_new_frame_not_a_stale_one(monke
         assert source.read() is None  # không trả lại khung cũ: tuổi khung phải phản ánh thật
     finally:
         source.close()
+
+
+def test_saved_settings_survive_a_pipeline_rebuild_when_the_real_resolution_differs(tmp_path):
+    """Sau restart, ngưỡng và revision đã lưu phải có hiệu lực, kể cả khi pipeline dựng lại theo độ phân giải thật."""
+    from retailvision.config.settings import OperatingSettings, SettingsStore
+    from retailvision.pipeline.settings_service import SettingsService
+
+    store = SettingsStore(tmp_path / "s.json")
+    store.save(2, OperatingSettings(dwell_seconds=0.0, on_count=4, on_hold_seconds=1.0, off_count=2, off_hold_seconds=1.0))
+    service = SettingsService.start(OperatingSettings(0.0, 2, 1.0, 1, 1.0), store)
+    world = World(size=(640, 480))  # khác 100x100 trong cấu hình nên pipeline bị dựng lại
+    world.tracks = []
+    link, _ = run(tmp_path, world, [(3, lambda: None)], settings=service)
+    states = of(link, TOPICS.state)
+    assert states and all(s["settings_revision"] == 2 for s in states)

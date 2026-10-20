@@ -130,6 +130,17 @@ class EnvelopeFactory:
             "frame_age_ms": frame_age_ms,
         }
 
+    def settings_result(
+        self, occurred_at: datetime, request_id: str, result: str, settings_revision: int, reason: Optional[str]
+    ) -> dict:
+        return {
+            **self._envelope(occurred_at),
+            "request_id": request_id,
+            "result": result,
+            "settings_revision": settings_revision,
+            "reason": reason,
+        }
+
     def status(self, occurred_at: datetime, status: str, version: str, clock_synced: bool) -> dict:
         return {
             **self._envelope(occurred_at),

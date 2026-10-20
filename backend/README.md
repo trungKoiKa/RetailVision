@@ -28,6 +28,7 @@ Flyway tạo bảng khi khởi động (V001–V003); Hibernate chỉ kiểm kh�
 | `GET /api/alerts?page=&size=` | Cảnh báo mới nhất trước; `size` ≤ 100; có `ack_latency_seconds` |
 | `GET /api/devices` | `edge01` và `node01`; chưa từng báo thì `status = UNKNOWN` |
 | `GET /api/health` | Sức khoẻ của backend: DB và kết nối MQTT (công khai) |
+| `GET/PUT /api/settings` | Xem và đổi ngưỡng vận hành (P1). PUT trả 202; kết quả APPLIED/REJECTED đến sau từ edge |
 | `GET /api/footfall?from=&to=&granularity=hour\|day` | Lượt vào/ra theo giờ hoặc ngày (giờ Việt Nam) kèm `coverage`, `gap`, số cảnh báo, phút OVERLOAD, số người trung bình/lớn nhất |
 | `GET /api/reports/export.csv?from=&to=&granularity=` | CSV cùng số liệu; ô không có dữ liệu để trống |
 | `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`, `POST /api/auth/password` | Đăng nhập/đăng xuất, thông tin tài khoản, đổi mật khẩu |
@@ -43,6 +44,14 @@ Dữ liệu cũ hoặc chưa có thì trả `UNKNOWN` và `null`, không trả 0
 - Tài khoản ADMIN đầu tiên tạo từ `RV_ADMIN_USER` / `RV_ADMIN_PASS` khi bảng `app_user` rỗng. Không có tài khoản nào thì backend ghi cảnh báo vào log.
 - Không xóa tài khoản, chỉ vô hiệu hóa. Luôn còn ít nhất một ADMIN đang hoạt động; không tự vô hiệu hóa chính mình.
 - Cookie chưa bật `Secure` vì LAN dùng HTTP; bật khi phục vụ HTTPS (`server.servlet.session.cookie.secure`).
+
+## Đổi ngưỡng (P1)
+
+`PUT /api/settings` lưu yêu cầu PENDING rồi gửi `settings/set` kèm `expected_settings_revision` (lấy từ state mới nhất của edge) và giữ PENDING tới khi edge trả `settings/result`. Backend không tự coi ngưỡng đã có hiệu lực: chỉ edge xác nhận.
+
+- Chỉ gửi được khi có state mới (không cũ) của edge và không có yêu cầu nào đang chờ (409 nếu không); MQTT tắt thì 503; giá trị sai thì 400 (`off_count < on_count`, các khoảng theo contract).
+- Quá `retailvision.settings-timeout-seconds` (30 s) chưa có trả lời: hiện `UNCONFIRMED`, không coi là đã áp dụng; câu trả lời đến muộn vẫn cập nhật đúng yêu cầu đó. Kết quả trùng không ghi đè.
+- `current` là ngưỡng của lần APPLIED gần nhất; `null` nghĩa là chưa từng đổi từ web (edge dùng giá trị trong file cấu hình của nó).
 
 ## Báo cáo
 

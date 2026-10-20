@@ -35,14 +35,27 @@ import vn.retailvision.support.MosquittoBroker;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class DbOutageIT {
 
-    static final int DB_PORT = freePort();
-
-    static final PostgreSQLContainer<?> DB = new PostgreSQLContainer<>("postgres:17-alpine")
-            .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig()
-                    .withPortBindings(new PortBinding(Ports.Binding.bindPort(DB_PORT), new ExposedPort(5432))));
+    static int DB_PORT;
+    static PostgreSQLContainer<?> DB;
 
     static {
-        DB.start();
+        // cổng chọn trước có thể bị tiến trình khác chiếm trước khi Docker gắn: thử lại với cổng khác
+        for (int attempt = 0; ; attempt++) {
+            final int port = freePort();
+            DB_PORT = port;
+            DB = new PostgreSQLContainer<>("postgres:17-alpine")
+                    .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig()
+                            .withPortBindings(new PortBinding(Ports.Binding.bindPort(port), new ExposedPort(5432))));
+            try {
+                DB.start();
+                break;
+            } catch (org.testcontainers.containers.ContainerLaunchException e) {
+                DB.stop();
+                if (attempt >= 4) {
+                    throw e;
+                }
+            }
+        }
     }
 
     @BeforeAll

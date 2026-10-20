@@ -36,6 +36,14 @@ class Topics:
         return f"{self._prefix}/{self.edge_id}/status"
 
     @property
+    def settings_set(self) -> str:
+        return f"{self._prefix}/{self.edge_id}/settings/set"
+
+    @property
+    def settings_result(self) -> str:
+        return f"{self._prefix}/{self.edge_id}/settings/result"
+
+    @property
     def operator_ack(self) -> str:
         return f"{self._prefix}/{self.node_id}/events/operator-ack"
 
