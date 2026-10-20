@@ -14,6 +14,7 @@ class _TrackState:
     last_seen: float
     stable_side: Optional[int] = None  # -1 hoặc +1; None khi chưa ổn định
     stable_point: Optional[Point] = None
+    stable_ts: float = 0.0  # thời điểm của stable_point
     cand_side: Optional[int] = None
     cand_count: int = 0
 
@@ -32,6 +33,10 @@ class LineCounter:
     Một lượt được tính khi track đã ổn định ở phía cũ, sang phía mới và đứng
     ở phía mới đủ `min_stable_observations` lần liên tiếp, và đoạn đi từ điểm
     ổn định cuối tới điểm hiện tại cắt đoạn vạch (không phải đường thẳng kéo dài).
+
+    Thời điểm ghi cho lượt là lúc ước lượng người chạm vạch (nội suy tuyến tính giữa điểm
+    ổn định cuối và điểm xác nhận), không phải lúc xác nhận. Nhờ vậy deadband và việc mất
+    detection ngắn không làm lệch thời điểm.
     """
 
     def __init__(
@@ -69,14 +74,15 @@ class LineCounter:
 
             if st.stable_side is None:
                 if self._bump(st, side) >= self._min_stable:
-                    self._settle(st, side, track.foot)
-                    matched = self._reassociate(track.track_id, side, ts, seen_now)
+                    self._settle(st, side, track.foot, ts)
+                    matched = self._reassociate(track.track_id, side, track.foot, ts, seen_now)
                     if matched is not None:
                         events.append(matched)
                 continue
 
             if side == st.stable_side:
                 st.stable_point = track.foot
+                st.stable_ts = ts
                 st.clear_candidate()
                 continue
 
@@ -86,15 +92,15 @@ class LineCounter:
                         CrossingEvent(
                             track_id=track.track_id,
                             direction=self._direction(st.stable_side, side),
-                            ts=ts,
+                            ts=self._touch_time(st.stable_point, st.stable_ts, track.foot, ts),
                         )
                     )
-                self._settle(st, side, track.foot)
+                self._settle(st, side, track.foot, ts)
 
         self._expire(ts)
         return events
 
-    def _reassociate(self, new_id: int, side: int, ts: float, seen_now: set[int]) -> Optional[CrossingEvent]:
+    def _reassociate(self, new_id: int, side: int, foot: Point, ts: float, seen_now: set[int]) -> Optional[CrossingEvent]:
         """Track mới vừa ổn định ở phía `side`. Nếu có track cũ vừa mất ở phía đối diện, gần vạch
         và mất trong khoảng reassoc_window_s, coi đó là cùng một người đã qua vạch và tính một lượt.
         Track cũ được xoá để không tính lần thứ hai."""
@@ -109,8 +115,17 @@ class LineCounter:
                 continue
             direction = self._direction(other.stable_side, side)
             del self._states[tid]
-            return CrossingEvent(track_id=new_id, direction=direction, ts=ts)
+            touch = self._touch_time(other.stable_point, other.stable_ts, foot, ts)
+            return CrossingEvent(track_id=new_id, direction=direction, ts=touch)
         return None
+
+    def _touch_time(self, p0: Point, t0: float, p1: Point, t1: float) -> float:
+        """Thời điểm ước lượng đường p0→p1 chạm đường thẳng chứa vạch."""
+        d0 = abs(signed_distance(p0, self._a, self._b))
+        d1 = abs(signed_distance(p1, self._a, self._b))
+        if d0 + d1 == 0:
+            return t1
+        return t0 + (t1 - t0) * d0 / (d0 + d1)
 
     def _side(self, foot: Point) -> Optional[int]:
         d = signed_distance(foot, self._a, self._b)
@@ -134,9 +149,10 @@ class LineCounter:
         return st.cand_count
 
     @staticmethod
-    def _settle(st: _TrackState, side: int, point: Point) -> None:
+    def _settle(st: _TrackState, side: int, point: Point, ts: float) -> None:
         st.stable_side = side
         st.stable_point = point
+        st.stable_ts = ts
         st.clear_candidate()
 
     def _expire(self, ts: float) -> None:

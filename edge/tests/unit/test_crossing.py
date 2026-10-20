@@ -133,3 +133,25 @@ def test_reassociation_expires_after_window():
         (4.5, [(2, 40)]), (5.0, [(2, 40)]),
     ])
     assert events == []
+
+
+def test_crossing_time_is_interpolated_to_the_line_not_confirmation():
+    counter = make_counter("IN", deadband=2.0, min_stable=2)
+    events = feed_timed(counter, [
+        (0.0, [(1, 60)]), (1.0, [(1, 55)]),     # ổn định bên phải
+        (2.0, [(1, 45)]), (3.0, [(1, 40)]),     # sang trái, xác nhận ở t=3
+    ])
+    assert len(events) == 1
+    # đoạn (55 @ 1.0) → (40 @ 3.0) chạm x=50 sau 1/3 đoạn: t = 1 + 2 * 5/15
+    assert abs(events[0].ts - (1.0 + 2.0 * 5 / 15)) < 1e-9
+
+
+def test_reassociated_crossing_time_is_interpolated():
+    counter = make_counter("IN")
+    events = feed_timed(counter, [
+        (0.0, [(1, 60)]), (0.5, [(1, 55)]),      # track 1 cuối cùng ở 55 @ 0.5
+        (1.0, []), (1.5, []),
+        (2.0, [(2, 45)]), (2.5, [(2, 45)]),      # track 2 xác nhận ở 45 @ 2.5
+    ])
+    assert len(events) == 1
+    assert abs(events[0].ts - 1.5) < 1e-9        # chạm vạch giữa 0.5 và 2.5
