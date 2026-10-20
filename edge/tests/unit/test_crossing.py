@@ -80,3 +80,56 @@ def test_invalid_config_is_rejected():
         make_counter(min_stable=0)
     with pytest.raises(ValueError):
         make_counter(a_to_b="LEFT")
+
+
+def feed_timed(counter, observations):
+    """observations: list of (ts, [(track_id, x)]); trả về mọi sự kiện."""
+    events = []
+    for ts, people in observations:
+        frame = [Track(tid, (x, 50.0), (0, 0, 0, 0), 0.9) for tid, x in people]
+        events += counter.update(frame, ts)
+    return events
+
+
+def test_track_lost_at_line_reappearing_on_other_side_counts_once():
+    counter = make_counter("IN")
+    events = feed_timed(counter, [
+        (0.0, [(1, 60)]), (0.5, [(1, 55)]),          # track 1 ổn định bên phải vạch
+        (1.0, []), (1.5, []),                          # mất khi qua vạch
+        (2.0, [(2, 40)]), (2.5, [(2, 40)]),          # track 2 xuất hiện bên trái
+        (3.0, [(2, 35)]),
+    ])
+    assert [(e.track_id, e.direction) for e in events] == [(2, "IN")]
+
+
+def test_reappearance_on_same_side_is_not_counted():
+    counter = make_counter("IN")
+    events = feed_timed(counter, [
+        (0.0, [(1, 60)]), (0.5, [(1, 55)]),
+        (1.0, []), (1.5, []),
+        (2.0, [(2, 60)]), (2.5, [(2, 60)]),
+    ])
+    assert events == []
+
+
+def test_reassociation_respects_distance_to_line():
+    # điểm ổn định cuối của track 1 cách vạch đúng 5 px
+    observations = [
+        (0.0, [(1, 60)]), (0.5, [(1, 55)]),
+        (1.0, []), (1.5, []),
+        (2.0, [(2, 40)]), (2.5, [(2, 40)]),
+    ]
+    tight = LineCounter(LINE, deadband_px=2, min_stable_observations=2, a_to_b_direction="IN", reassoc_px=4)
+    loose = LineCounter(LINE, deadband_px=2, min_stable_observations=2, a_to_b_direction="IN", reassoc_px=5)
+    assert feed_timed(tight, observations) == []
+    assert [(e.track_id, e.direction) for e in feed_timed(loose, observations)] == [(2, "IN")]
+
+
+def test_reassociation_expires_after_window():
+    counter = make_counter("IN")
+    events = feed_timed(counter, [
+        (0.0, [(1, 60)]), (0.5, [(1, 55)]),
+        (1.0, []), (4.0, []),                  # mất quá lâu
+        (4.5, [(2, 40)]), (5.0, [(2, 40)]),
+    ])
+    assert events == []

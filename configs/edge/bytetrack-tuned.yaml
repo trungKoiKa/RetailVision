@@ -1,0 +1,9 @@
+# ByteTrack chỉnh cho video quay ở độ phân giải cao, người có thể bị che hoặc mất box vài khung ở vạch.
+# Dựa trên bytetrack.yaml mặc định của ultralytics 8.3; chỉ đổi hai tham số dưới đây.
+tracker_type: bytetrack
+track_high_thresh: 0.25
+track_low_thresh: 0.1
+new_track_thresh: 0.25
+track_buffer: 90      # giữ track lâu hơn (mặc định 30): ~3 giây ở 30 khung/giây
+match_thresh: 0.9     # mặc định 0.8. Ngưỡng là khoảng cách tối đa (1 - IoU) để ghép: cao hơn = ghép dễ hơn
+fuse_score: True
