@@ -1,4 +1,4 @@
-# Nhãn tay: VIRAT_S_000002.mp4, 0–60 giây
+# Nhãn tay: VIRAT_S_000002 (hiện là data/raw/clip2.mp4), 0–60 giây
 
 - Người gán: AI, đọc từ ảnh cắt độ phân giải gốc quanh vạch, không phải người đo độc lập.
 - Trạng thái: **ước lượng, cần kiểm tra lại bằng `evaluation/tools/label.py`** trước khi dùng để báo cáo.
