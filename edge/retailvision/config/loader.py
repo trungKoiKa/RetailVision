@@ -65,6 +65,13 @@ class HealthConfig(BaseModel):
     stale_seconds: float = Field(3.0, gt=0)
 
 
+class MqttConfig(BaseModel):
+    """Địa chỉ broker. Tài khoản/mật khẩu lấy từ biến môi trường RV_MQTT_USER, RV_MQTT_PASS, không ghi vào file này."""
+
+    host: str = "127.0.0.1"
+    port: int = Field(1883, gt=0, lt=65536)
+
+
 class EdgeConfig(BaseModel):
     site_id: str = Field(min_length=1, max_length=64)
     device_id: str = "edge01"
@@ -77,6 +84,7 @@ class EdgeConfig(BaseModel):
     queue: QueueConfig
     alert: AlertConfig = AlertConfig()
     health: HealthConfig = HealthConfig()
+    mqtt: Optional[MqttConfig] = None  # không khai báo: chạy không gửi MQTT
 
 
 def _resolve(base: Path, value: Optional[Path]) -> Optional[Path]:
