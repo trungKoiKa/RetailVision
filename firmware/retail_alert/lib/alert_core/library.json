@@ -1,0 +1,6 @@
+{
+  "name": "alert_core",
+  "version": "0.1.0",
+  "description": "Logic thuần của firmware (không phụ thuộc Arduino): mô hình trạng thái, đầu ra, ACK, bản tin",
+  "dependencies": { "bblanchon/ArduinoJson": "^7.4.2" }
+}
