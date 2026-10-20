@@ -20,7 +20,7 @@ import cv2
 from pydantic import ValidationError
 
 from retailvision.config.loader import load_config
-from retailvision.pipeline.capture import CameraSource, Frame, VideoFileSource
+from retailvision.pipeline.capture import CameraSource, VideoFileSource
 from retailvision import __version__
 from retailvision.messaging.bridge import EdgeMessenger
 from retailvision.messaging.mqtt_client import MqttLink
@@ -29,15 +29,13 @@ from retailvision.messaging.topics import Topics
 from retailvision.pipeline.runner import (
     JsonlSink,
     Pipeline,
-    apply_acks,
     open_events_file,
-    process_frame,
+    run_camera_loop,
     run_pipeline,
 )
 from retailvision.resilience.health import clock_synced
 from retailvision.presentation.overlay import draw
 
-CAMERA_STALE_POLL_S = 0.01
 WINDOW_NAME = "RetailVision"
 
 
@@ -106,16 +104,6 @@ def _build_messenger(config) -> Optional[EdgeMessenger]:
     )
     messenger.attach(link)
     return messenger
-
-
-def _wait_first_frame(read, timeout_s: float = 10.0) -> Frame:
-    deadline = time.monotonic() + timeout_s
-    while time.monotonic() < deadline:
-        frame = read()
-        if frame is not None:
-            return frame
-        time.sleep(CAMERA_STALE_POLL_S)
-    raise RuntimeError("Camera không trả khung hình trong 10 giây")
 
 
 def run(args: argparse.Namespace) -> int:
@@ -207,47 +195,12 @@ def run(args: argparse.Namespace) -> int:
 
 
 def _run_camera(config, detector, sink: _CountingSink, messenger: Optional[EdgeMessenger]) -> int:
-    """Chạy camera thật cho đến khi nhấn Ctrl+C. Mất khung hình quá lâu thì vào UNKNOWN."""
+    """Chạy camera thật cho đến khi nhấn Ctrl+C. Camera mất/chưa cắm thì vào UNKNOWN và tự phục hồi."""
     source = CameraSource(config.source.index, config.source.width, config.source.height)
     try:
-        first = _wait_first_frame(source.read)
-        h, w = first.image.shape[:2]
-        pipeline = Pipeline(config, (w, h))
-        stale_s = config.health.stale_seconds
-        last_frame_at = time.monotonic()
-        is_stale = False
-        processed = 0
-
-        frame: Optional[Frame] = first
-        while True:
-            now = time.monotonic()
-            if frame is not None:
-                last_frame_at = now
-                is_stale = False
-                process_frame(
-                    pipeline,
-                    detector,
-                    sink,
-                    messenger,
-                    frame,
-                    frame_age_ms=lambda f: max(0, int((time.monotonic() - f.ts) * 1000)),
-                )
-                processed += 1
-            else:
-                if not is_stale and now - last_frame_at > stale_s:
-                    is_stale = True
-                    events = pipeline.stale(now)
-                    sink.write(events)
-                    if messenger is not None:
-                        messenger.publish_events(now, events)
-                if messenger is not None:
-                    apply_acks(pipeline, messenger, sink, now)
-                    messenger.on_idle(now, pipeline)
-            time.sleep(CAMERA_STALE_POLL_S)
-            frame = source.read()
+        return run_camera_loop(config, source.read, detector, sink, messenger)
     finally:
         source.close()
-    return processed
 
 
 def main(argv: Optional[list[str]] = None) -> int:

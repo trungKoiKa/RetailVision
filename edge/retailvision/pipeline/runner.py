@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import sys
+import time
 from dataclasses import asdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Iterable, Optional, Protocol, TextIO
@@ -30,6 +31,7 @@ class Detector(Protocol):
 
 class Pipeline:
     def __init__(self, config: EdgeConfig, frame_size: tuple[int, int]) -> None:
+        self.frame_size = frame_size
         w, h = frame_size
         line = to_pixels(config.counting.line, w, h)
         self.line_px = (line[0], line[1])
@@ -166,3 +168,64 @@ def open_events_file(path: Optional[Path]) -> TextIO:
         return sys.stdout
     path.parent.mkdir(parents=True, exist_ok=True)
     return path.open("w", encoding="utf-8")
+
+
+CAMERA_POLL_S = 0.01
+
+
+def run_camera_loop(
+    config: EdgeConfig,
+    read: Callable[[], Optional[Frame]],
+    detector: Detector,
+    sink: JsonlSink,
+    messenger: "Optional[EdgeMessenger]" = None,
+    *,
+    clock: Callable[[], float] = time.monotonic,
+    sleep: Callable[[float], None] = time.sleep,
+    should_stop: Callable[[], bool] = lambda: False,
+) -> int:
+    """Vòng chạy camera trực tiếp. Trả về số khung đã xử lý khi `should_stop()` (mặc định: không bao giờ).
+
+    - Chưa có khung nào hoặc quá `health.stale_seconds` không có khung mới: đưa máy trạng thái về UNKNOWN
+      (alert đang mở kết thúc INTERRUPTED), vẫn gửi state mỗi giây với queue_count = null. Không bao giờ
+      ghi 0 người cho dữ liệu không có.
+    - Khung hình trở lại: tự phục hồi, bộ theo dõi được reset để không nối ID cũ qua khoảng gián đoạn.
+    - Độ phân giải thật của camera có thể khác cấu hình: dựng lại pipeline theo kích thước khung hình.
+    `clock` phải cùng miền thời gian với `Frame.ts` (CameraSource dùng time.monotonic).
+    """
+    pipeline = Pipeline(config, (config.source.width, config.source.height))
+    stale_s = config.health.stale_seconds
+    last_frame_at = clock()
+    is_stale = False
+    processed = 0
+    while not should_stop():
+        now = clock()
+        frame = read()
+        if frame is not None:
+            height, width = frame.image.shape[:2]
+            if (width, height) != pipeline.frame_size:
+                print(f"Độ phân giải thật {width}x{height}; dựng lại vạch và vùng chờ theo kích thước này", file=sys.stderr)
+                pipeline = Pipeline(config, (width, height))
+            if is_stale:
+                reset = getattr(detector, "reset", None)
+                if reset is not None:
+                    reset()
+            last_frame_at = now
+            is_stale = False
+            process_frame(
+                pipeline, detector, sink, messenger, frame,
+                frame_age_ms=lambda f: max(0, int((clock() - f.ts) * 1000)),
+            )
+            processed += 1
+        else:
+            if not is_stale and now - last_frame_at > stale_s:
+                is_stale = True
+                events = pipeline.stale(now)
+                sink.write(events)
+                if messenger is not None:
+                    messenger.publish_events(now, events)
+            if messenger is not None:
+                apply_acks(pipeline, messenger, sink, now)
+                messenger.on_idle(now, pipeline)
+        sleep(CAMERA_POLL_S)
+    return processed

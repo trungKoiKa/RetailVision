@@ -88,10 +88,12 @@ Tài liệu trả lời: làm gì trước, đang ở đâu. Mỗi phần chỉ 
 
 ## Phần 9 — Phục hồi lỗi (~6 giờ)
 
-- [ ] T11, T13, T18, T25, T26.
+- [x] T11, T13, T18, T25, T26. *(phần kiểm tự động được trên laptop; phần phần cứng còn lại ghi trong `evaluation/recovery/README.md`)*
 - [ ] Mất/nhân đôi dữ liệu ở T25 → ghi kết quả, viết ADR bổ sung outbox trên edge.
 
 **Gate:** mọi kịch bản phục hồi được hoặc báo lỗi rõ.
+
+*Trạng thái:* đạt ở mức tự động trên laptop (Mosquitto, PostgreSQL thật); chưa thử trên Pi, camera, ESP32 thật.
 
 ## Phần 10 — Nghiệp vụ web (~10 giờ)
 
@@ -134,3 +136,4 @@ Cắt theo thứ tự: settings web → CSV → vai trò MANAGER → NCNN 416 �
 | 2026-10-21 | 6 | Backend Spring: Flyway V001–V003, nhận MQTT (cleanSession=false, ack sau commit, chống trùng event_id), API overview/alerts/devices/health; 54 test xanh (PostgreSQL + Mosquitto thật: trùng event_id, DB lỗi → gửi lại, backend tắt rồi bật vẫn nhận đủ); chạy thử edge giả → backend → DB → API | Chưa thử với Pi thật; chưa đăng nhập | Phần 7: frontend Overview |
 | 2026-10-21 | 7 | Frontend Vite/React: trang Tổng quan; 16 test (vitest), typecheck và build sạch; kiểm trên Chrome với backend thật: hiện OVERLOAD 5 người, tắt backend thì banner lỗi và mọi số liệu thành "—" | Chưa có Login/Footfall/Alerts/Devices (Phần 10) | Phần 8-9 |
 | 2026-10-21 | 8 | Công cụ benchmark (`bench.py`, `export_ncnn.py`, `sysmetrics`), `retail-edge.service`, chrony, `install_edge.sh`, cấu hình camera mẫu; 109 test edge xanh; NCNN 320/416 xuất được và chạy trong pipeline thật trên laptop (320 chỉ thấy 1/3 lượt trên clip VIRAT: cần kiểm kích thước với cảnh thật) | Chưa có số đo Pi, chưa cài thử trên Pi | Phần 9 |
+| 2026-10-21 | 9 | Phục hồi lỗi: camera mất/chưa cắm (UNKNOWN, tự phục hồi), broker dừng/restart, backend tắt, DB sập thật, broker lên muộn; sửa 3 lỗi thật (edge thoát khi chưa có camera, Ultralytics gọi ra Internet, backend phục hồi chậm khi DB sập); edge 127 test, backend 59 test, frontend 18 test xanh | Chưa thử trên Pi/camera/ESP32 thật | Phần 10 |

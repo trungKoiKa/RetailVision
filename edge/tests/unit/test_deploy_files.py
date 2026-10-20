@@ -33,6 +33,11 @@ def test_edge_service_unit_has_the_needed_directives():
     assert unit["Install"]["WantedBy"] == "multi-user.target"
 
 
+def test_service_runs_ultralytics_offline():
+    text = (PI / "systemd" / "retail-edge.service").read_text(encoding="utf-8")
+    assert "Environment=YOLO_OFFLINE=true" in text
+
+
 def test_service_unit_contains_no_secrets():
     text = (PI / "systemd" / "retail-edge.service").read_text(encoding="utf-8").lower()
     assert "password" not in text and "rv_mqtt_pass" not in text

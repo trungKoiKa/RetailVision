@@ -4,6 +4,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -43,6 +44,8 @@ public class MqttConnectionManager implements MqttCallbackExtended, SmartLifecyc
             });
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final AtomicBoolean restartPending = new AtomicBoolean(false);
+    /** Cầu dao: sau lỗi hạ tầng, tới mốc này không xử lý bản tin QoS 1 (để không chặn luồng nhận bằng các lần thử DB). */
+    private final AtomicLong retryBlockedUntilNanos = new AtomicLong(0);
     private volatile MqttClient client;
 
     public MqttConnectionManager(RetailVisionProperties props, MqttMessageProcessor processor, MqttRouter router) {
@@ -172,13 +175,24 @@ public class MqttConnectionManager implements MqttCallbackExtended, SmartLifecyc
 
     @Override
     public void messageArrived(String topic, MqttMessage message) {
+        log.debug("Nhận bản tin id={} qos={} dup={} topic={}", message.getId(), message.getQos(), message.isDuplicate(), topic);
+        if (message.getQos() > 0 && System.nanoTime() - retryBlockedUntilNanos.get() < 0) {
+            // đang chờ nối lại sau lỗi hạ tầng: không thử DB nữa, không ack; broker sẽ gửi lại sau khi nối lại
+            scheduleRestart();
+            return;
+        }
         MqttMessageProcessor.Outcome outcome = processor.process(topic, message.getPayload());
+        log.debug("Kết quả xử lý id={}: {}", message.getId(), outcome);
         if (outcome == MqttMessageProcessor.Outcome.RETRY) {
+            // khoảng chặn bao trùm thời gian ngắt, nối lại và nhận lại bản tin
+            long window = TimeUnit.SECONDS.toNanos(props.restartDelaySeconds() + 2L);
+            retryBlockedUntilNanos.set(System.nanoTime() + window);
             scheduleRestart(); // không ack: broker gửi lại khi nối lại
             return;
         }
         try {
             client.messageArrivedComplete(message.getId(), message.getQos());
+            log.debug("Đã ack id={}", message.getId());
         } catch (MqttException e) {
             // không ack được (đang mất kết nối): broker sẽ gửi lại, DB chặn trùng theo event_id
             log.warn("Không ack được bản tin trên {}: {}", topic, e.getMessage());
