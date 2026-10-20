@@ -94,4 +94,11 @@ def load_config(path: Path | str) -> EdgeConfig:
     base = yaml_path.parent
     config.source.path = _resolve(base, config.source.path)
     config.model.weights = _resolve(base, config.model.weights)
+    if "/" in config.model.tracker or "\\" in config.model.tracker or config.model.tracker.startswith("."):
+        # đường dẫn tới file cấu hình tracker: tương đối theo file YAML.
+        # Tên có sẵn như 'bytetrack.yaml' giữ nguyên cho ultralytics.
+        tracker_file = (base / config.model.tracker).resolve()
+        if not tracker_file.is_file():
+            raise ValueError(f"Không thấy file cấu hình tracker: {tracker_file}")
+        config.model.tracker = str(tracker_file)
     return config

@@ -12,10 +12,10 @@ source:
   path: ../data/raw/clip.mp4   # tương đối theo file này; có thể ghi đè bằng --source
 
 model:
-  weights: ../models/source/yolov8n.pt
-  image_size: 640  # tạm: 320 bỏ sót người nhỏ trên video 1920x1080; chốt lại khi benchmark trên Pi
+  weights: ../../models/source/yolov8n.pt  # tính từ configs/examples/
+  image_size: 1280  # 640 và 320 bỏ sót người nhỏ ở vạch; 1280 chậm hơn, chốt lại khi benchmark trên Pi
   confidence: 0.35
-  tracker: bytetrack.yaml
+  tracker: ../edge/bytetrack-tuned.yaml
 
 counting:
   line: [[0.45, 0.10], [0.45, 0.90]]   # vạch đứng, A=đầu trên, B=đầu dưới

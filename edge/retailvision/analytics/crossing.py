@@ -41,6 +41,8 @@ class LineCounter:
         min_stable_observations: int,
         a_to_b_direction: str,
         track_ttl_s: float = 2.0,
+        reassoc_px: float = 80.0,
+        reassoc_window_s: float = 2.0,
     ) -> None:
         if min_stable_observations < 1:
             raise ValueError("min_stable_observations phải >= 1")
@@ -51,10 +53,13 @@ class LineCounter:
         self._min_stable = min_stable_observations
         self._a_to_b = a_to_b_direction
         self._ttl = track_ttl_s
+        self._reassoc_px = reassoc_px
+        self._reassoc_window = reassoc_window_s
         self._states: dict[int, _TrackState] = {}
 
     def update(self, tracks: list[Track], ts: float) -> list[CrossingEvent]:
         events: list[CrossingEvent] = []
+        seen_now = {t.track_id for t in tracks}
         for track in tracks:
             st = self._states.setdefault(track.track_id, _TrackState(last_seen=ts))
             st.last_seen = ts
@@ -65,6 +70,9 @@ class LineCounter:
             if st.stable_side is None:
                 if self._bump(st, side) >= self._min_stable:
                     self._settle(st, side, track.foot)
+                    matched = self._reassociate(track.track_id, side, ts, seen_now)
+                    if matched is not None:
+                        events.append(matched)
                 continue
 
             if side == st.stable_side:
@@ -85,6 +93,24 @@ class LineCounter:
 
         self._expire(ts)
         return events
+
+    def _reassociate(self, new_id: int, side: int, ts: float, seen_now: set[int]) -> Optional[CrossingEvent]:
+        """Track mới vừa ổn định ở phía `side`. Nếu có track cũ vừa mất ở phía đối diện, gần vạch
+        và mất trong khoảng reassoc_window_s, coi đó là cùng một người đã qua vạch và tính một lượt.
+        Track cũ được xoá để không tính lần thứ hai."""
+        for tid, other in list(self._states.items()):
+            if tid == new_id or tid in seen_now:
+                continue
+            if other.stable_side is None or other.stable_side == side or other.stable_point is None:
+                continue
+            if ts - other.last_seen > self._reassoc_window:
+                continue
+            if abs(signed_distance(other.stable_point, self._a, self._b)) > self._reassoc_px:
+                continue
+            direction = self._direction(other.stable_side, side)
+            del self._states[tid]
+            return CrossingEvent(track_id=new_id, direction=direction, ts=ts)
+        return None
 
     def _side(self, foot: Point) -> Optional[int]:
         d = signed_distance(foot, self._a, self._b)

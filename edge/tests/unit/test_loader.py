@@ -51,7 +51,10 @@ def test_polygon_needs_three_points(tmp_path):
 def test_shipped_example_config_is_valid():
     from pathlib import Path
 
-    example = Path(__file__).resolve().parents[3] / "configs" / "examples" / "site01-video.yaml"
-    cfg = load_config(example)
+    repo = Path(__file__).resolve().parents[3]
+    cfg = load_config(repo / "configs" / "examples" / "site01-video.yaml")
     assert cfg.profile == "pilot"
     assert cfg.counting.a_to_b_direction == "IN"
+    # đường dẫn phải trỏ đúng tới models/source, không được tạo thư mục mới
+    assert cfg.model.weights == (repo / "models" / "source" / "yolov8n.pt").resolve()
+    assert cfg.model.tracker == str((repo / "configs" / "edge" / "bytetrack-tuned.yaml").resolve())

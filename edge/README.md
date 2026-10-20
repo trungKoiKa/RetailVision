@@ -48,3 +48,19 @@ cd edge
 ## Số đo (laptop, không phải Pi)
 
 - Trên đoạn 60 giây (1798 khung, 1920×1080), YOLOv8n `imgsz=320`, CPU: khoảng 30 khung/giây cho toàn pipeline.
+
+## Cấu hình hiện tại cho video thử (`site01-video.yaml`)
+
+- `imgsz: 1280`: 640 và 320 bỏ sót người nhỏ gần vạch.
+- Tracker `configs/edge/bytetrack-tuned.yaml`: `track_buffer: 90`, `match_thresh: 0.9`. Lưu ý: `match_thresh` là khoảng cách tối đa (1 − IoU) để ghép, giá trị cao hơn nghĩa là ghép dễ hơn.
+- Đếm qua vạch có ghép ID: track mất gần vạch rồi xuất hiện ở phía bên kia trong 2 giây được tính một lượt (`reassoc_px=80`, `reassoc_window_s=2`).
+
+Số đo trên đoạn 60 giây (1798 khung), laptop CPU, không có nhãn đúng sai nên chỉ là chỉ số gián tiếp:
+
+| Cấu hình | ID khác nhau | ID mới gần vạch | ID mất gần vạch |
+|---|---|---|---|
+| 1280, tracker mặc định | 41 | 5 | 4 |
+| 1280, tracker đã chỉnh (`match_thresh` 0.7, sai hướng) | 75 | 15 | 16 |
+| 1280, tracker đã chỉnh (`match_thresh` 0.9) | 13 | 1 | 1 |
+
+Kết quả đếm cuối cùng trên đoạn này: 3 lượt IN, 0 OUT. Chưa đối chiếu với nhãn tay nên chưa biết đúng bao nhiêu.
