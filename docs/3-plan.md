@@ -115,9 +115,9 @@ Tài liệu trả lời: làm gì trước, đang ở đâu. Mỗi phần chỉ 
 
 ## Phần 12 — Đóng gói (~8 giờ)
 
-- [ ] Compose máy chủ, secret ngoài source, backup/restore đã thử.
-- [ ] CI: unit edge, validate contract, build backend/frontend.
-- [ ] README quickstart từ clone sạch; chạy thử được bằng video + fake publisher khi không có Pi.
+- [x] Compose máy chủ, secret ngoài source, backup/restore đã thử. *(thử trên Windows + Docker Desktop, cả script sh và ps1)*
+- [x] CI: unit edge, validate contract, build backend/frontend, firmware, Compose. *(workflow đã qua actionlint; chưa chạy trên GitHub cho đến khi PR mở)*
+- [x] README quickstart; chạy thử bằng broker + edge giả khi không có Pi. *(chạy từ cây làm việc, chưa phải clone sạch trên máy khác)*
 - [ ] Video demo 3–5 phút.
 
 **Gate:** người khác tái hiện được.
@@ -142,3 +142,4 @@ Cắt theo thứ tự: settings web → CSV → vai trò MANAGER → NCNN 416 �
 | 2026-10-21 | 10b | Đổi ngưỡng từ web (FR-09, P1): backend `PUT /api/settings` (PENDING/APPLIED/REJECTED/UNCONFIRMED), edge áp dụng nguyên bộ, revision cũ bị từ chối, lệnh trùng không áp dụng hai lần, lưu qua restart; edge 164 test, backend 99 test; kiểm chéo ngôn ngữ thật: edge Python thật ↔ Mosquitto ↔ backend Java thật, đổi hai lần qua API đều APPLIED, file lưu và `settings_revision` trong state khớp | Chưa có trang web (10c) | 10c |
 | 2026-10-21 | 10c | Trang web: Đăng nhập, Lượt vào/ra (biểu đồ, bảng, gap xám, CSV), Cảnh báo, Thiết bị + đổi ngưỡng, Tài khoản; 59 test vitest; kiểm trên Chrome với hệ thống thật: đăng nhập, báo cáo có 6 khung xám và không có cột 0, đổi ngưỡng được edge thật áp dụng (revision 1). Test phát hiện và sửa một lỗi thật: `queryClient.clear()` làm giao diện không cập nhật sau đăng nhập/đăng xuất | OLED (P1) chưa làm; chưa có Pi thật | Phần 11 |
 | 2026-10-21 | 11 | Công cụ đánh giá: `metrics.py` (sai số đếm từng hướng, MAE vùng chờ, precision/recall cảnh báo ±3 s bằng chính máy trạng thái của edge, khoảng tin cậy Wilson, p50/p95), `evaluate.py` (manifest dev/test → báo cáo, cảnh báo cỡ mẫu nhỏ, không kết luận khi thiếu dữ liệu), `label_queue.py`, `record.py` (video đúng thời gian thực), `calibrate.py` (vạch/vùng → YAML, mũi tên chiều vào), đo độ trễ (`--latency-out`, firmware echo + `latency_echo.py`); edge 210 test, firmware 26 test và build `esp32dev_debug`; chạy thử `evaluate.py` trên kết quả thật của clip VIRAT (3 lượt IN, ghi rõ mẫu nhỏ) | Chưa có clip và nhãn chính thức, chưa có số đo trên Pi; nhãn VIRAT do AI ước lượng | Phần 12 |
+| 2026-10-21 | 12 | Đóng gói: Dockerfile backend/web, nginx cùng origin, `deploy/server/compose.yaml` + `compose.demo.yaml` (broker và edge giả), `backup`/`restore` sh và ps1 (kiểm `pg_restore --list`, khôi phục vào CSDL riêng), CI GitHub Actions, README gốc; đã dựng và đăng nhập qua nginx, thấy dữ liệu edge giả, sao lưu và khôi phục 5 migration | Chưa thử trên Linux/clone sạch ở máy khác; chưa có video demo; chưa có HTTPS | Hoàn thiện bằng phần cứng thật |

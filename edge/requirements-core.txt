@@ -1,0 +1,6 @@
+# Phụ thuộc lõi của edge, không gồm Ultralytics/torch (nặng). Đủ để chạy test, fake_publisher và các công cụ không cần model.
+pyyaml==6.0.3
+pydantic==2.14.1
+numpy==2.5.4
+opencv-python-headless==5.0.0.93
+paho-mqtt==2.1.0
