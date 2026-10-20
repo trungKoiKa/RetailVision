@@ -1,14 +1,13 @@
 # Nhãn tay: VIRAT_S_000002 (hiện là data/raw/clip2.mp4), 0–60 giây
 
-- Người gán: AI, đọc từ ảnh cắt độ phân giải gốc quanh vạch, không phải người đo độc lập.
-- Trạng thái: **ước lượng, cần kiểm tra lại bằng `evaluation/tools/label.py`** trước khi dùng để báo cáo.
-- Quy tắc: IN = người đi từ phía phải vạch sang phía trái (phía -1 → +1 theo `counting.a_to_b_direction: IN`).
-- Sai số thời gian khoảng ±0,5 giây.
+- Người gán: AI, đọc từ khung hình gốc có vẽ vạch vàng ở mỗi 0,2 giây quanh thời điểm qua vạch.
+- Trạng thái: ước lượng bằng mắt, sai số ±0,2 giây. Chưa có người kiểm tra độc lập.
+- Quy tắc: IN = đi từ phía phải vạch sang phía trái (theo `counting.a_to_b_direction: IN`).
 
-| ts (giây) | Chiều | Mô tả |
+| ts (giây) | Chiều | Người |
 |---|---|---|
-| 14.3 | IN | Người áo xanh vượt vạch |
-| 15.5 | IN | Người áo đen (có túi) vượt vạch |
-| 16.3 | IN | Người áo đỏ vượt vạch |
+| 14.2 | IN | Áo xanh |
+| 15.4 | IN | Áo đen (có túi) |
+| 16.4 | IN | Áo đỏ |
 
-Nhóm 3 người đi cùng nhau. Không thấy lượt OUT trong đoạn 0–60 giây.
+Không có lượt OUT trong đoạn 0–60 giây. Nhóm 3 người đi cùng nhau.
