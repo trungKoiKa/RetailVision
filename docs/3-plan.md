@@ -51,8 +51,8 @@ Tài liệu trả lời: làm gì trước, đang ở đâu. Mỗi phần chỉ 
 
 - [x] Mosquitto: tài khoản, ACL, persistence, giới hạn hàng đợi (`deploy/pi/mosquitto/`) — ACL đã kiểm bằng Mosquitto trên Windows, chưa cài trên Pi.
 - [x] Edge publish `state`/sự kiện/`status`, nhận `operator-ack`; `tools/fake_publisher.py`.
-- [ ] Firmware: LED, còi, nút debounce, 4 trạng thái, timeout 5 giây, gửi lại ACK.
-- [ ] Bảng chân GPIO trong `firmware/retail_alert/README.md`.
+- [ ] Firmware: LED, còi, nút debounce, 4 trạng thái, timeout 5 giây, gửi lại ACK. *(đã viết, 25 test logic xanh, biên dịch được; chưa nạp lên ESP32)*
+- [x] Bảng chân GPIO trong `firmware/retail_alert/README.md`.
 - [ ] T12, T17, T24.
 
 **Gate:** camera → đỏ + còi → ACK → còi tắt, đỏ giữ → giảm người → xanh, **không cần máy chủ**.
@@ -126,3 +126,4 @@ Cắt theo thứ tự: settings web → CSV → vai trò MANAGER → NCNN 416 �
 | 2026-10-19 | 2, 3, 4 | Contract + validate; analytics 34 test; pipeline, CLI, công cụ gán nhãn và chấm điểm; `pytest` 55 xanh | Chưa có clip cảnh cửa hàng | Sửa độ lệch thời điểm đếm |
 | 2026-10-20 | 4 | Ghi thời điểm lượt qua vạch bằng nội suy; đoạn VIRAT 60 s: 3 TP/0 FP/0 FN ở tol 1,0 s, 2 TP/1 FP/1 FN ở tol 0,5 s (trước: 2/1/1 và 0/3/3); `pytest` 57 xanh | Một clip, 3 nhãn; lệch ~0,8 s ở người giữa nhóm do bbox bị che | Phần 1: smoke test trên Pi |
 | 2026-10-20 | 5 | Edge gửi MQTT (state, crossing, alert, telemetry, status+LWT), nhận ACK; `fake_publisher`; Mosquitto conf + ACL; `check_acl.py` 9/9; luồng edge giả → broker → ESP32 giả → ACK chạy đúng; `pytest` 87 xanh (gồm test broker thật) | Chưa có firmware, chưa thử trên Pi | Firmware ESP32 |
+| 2026-10-21 | 5 | Khung firmware PlatformIO: logic thuần `lib/alert_core` (25 test native xanh), task mạng, `main.cpp`; biên dịch `esp32dev` thành công (RAM 13,9%, Flash 59%, không cảnh báo); bản tin C++ `operator-ack`/`status` qua JSON Schema thật | Chưa nạp lên ESP32, chưa thử với broker; `node01/status` cần giờ UTC (xem README firmware) | Bạn đấu mạch, nạp, thử với `fake_publisher` |
