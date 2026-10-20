@@ -220,6 +220,7 @@ def run_camera_loop(
     messenger: "Optional[EdgeMessenger]" = None,
     settings: "Optional[SettingsService]" = None,
     *,
+    latency_ms: Optional[list] = None,
     clock: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
     should_stop: Callable[[], bool] = lambda: False,
@@ -232,6 +233,7 @@ def run_camera_loop(
     - Khung hình trở lại: tự phục hồi, bộ theo dõi được reset để không nối ID cũ qua khoảng gián đoạn.
     - Độ phân giải thật của camera có thể khác cấu hình: dựng lại pipeline theo kích thước khung hình.
     `clock` phải cùng miền thời gian với `Frame.ts` (CameraSource dùng time.monotonic).
+    `latency_ms`, nếu có, nhận độ trễ từ lúc camera trả khung tới lúc phân tích và phát state xong (ms) của từng khung.
     """
     def build(size):
         return Pipeline(config, size, settings.current if settings else None, settings.revision if settings else 0)
@@ -255,11 +257,13 @@ def run_camera_loop(
                     reset()
             last_frame_at = now
             is_stale = False
-            process_frame(
-                pipeline, detector, sink, messenger, frame,
-                frame_age_ms=lambda f: max(0, int((clock() - f.ts) * 1000)),
-                settings=settings,
-            )
+            def age(f: Frame) -> int:
+                value = max(0, int((clock() - f.ts) * 1000))
+                if latency_ms is not None:
+                    latency_ms.append(value)
+                return value
+
+            process_frame(pipeline, detector, sink, messenger, frame, frame_age_ms=age, settings=settings)
             processed += 1
         else:
             if not is_stale and now - last_frame_at > stale_s:

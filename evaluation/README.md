@@ -62,6 +62,25 @@ T01–T10, T14, T16, T23 có unit test bằng tọa độ/clock giả. Các test
 
 Mọi kết quả ghi kèm phần cứng, model, input size, `config_version`, ánh sáng, mật độ, nguồn live hay replay. Không dùng số đo laptop làm số đo Pi. Không đạt thì ghi số thật và phân tích nguyên nhân.
 
+## Công cụ và quy trình chạy
+
+| Việc | Công cụ |
+| --- | --- |
+| Hiệu chuẩn vạch/vùng | `python -m retailvision.tools.calibrate` |
+| Quay clip / chụp khung hình trên Pi | `python -m retailvision.tools.record` |
+| Gán nhãn lượt qua vạch | `evaluation/tools/label.py` |
+| Gán nhãn số người vùng chờ | `evaluation/tools/label_queue.py` |
+| Chạy hệ thống trên clip | `python -m retailvision.app --source <clip> --no-mqtt --events-out <jsonl>` |
+| Chấm và lập báo cáo | `evaluation/evaluate.py` (chỉ số ở `evaluation/metrics.py`) |
+| FPS toàn luồng, RAM, nhiệt | `evaluation/benchmarks/bench.py` |
+| Độ trễ ảnh → state | `python -m retailvision.app --latency-out <csv>` (chạy camera trực tiếp trên Pi) |
+| Độ trễ state → ESP32 | firmware `esp32dev_debug` + `evaluation/tools/latency_echo.py` (chạy trên Pi, cận trên một chiều) |
+| Ổn định, rò rỉ RAM | `evaluation/tools/soak.py`; phục hồi lỗi: [recovery/](recovery/README.md) |
+
+Quy trình thu clip và chia dev/test: [scenarios/README.md](scenarios/README.md). Định dạng nhãn và manifest: [ground_truth/README.md](ground_truth/README.md).
+
+`evaluate.py` không bao giờ kết luận "đạt" chỉ từ vài mẫu: dưới 20 lượt qua cửa, 30 mốc số người hoặc 10 cảnh báo thật thì kết luận kèm "mẫu nhỏ: chưa đủ để kết luận", và tập test dưới 100 lượt được ghi rõ là chưa đủ cỡ mẫu. Mọi tỷ lệ kèm khoảng tin cậy Wilson 95%.
+
 ## Kịch bản demo (7–10 phút)
 
 1. Nêu hai nhu cầu và phạm vi một cửa, một vùng chờ.

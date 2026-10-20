@@ -118,6 +118,22 @@ void test_model_valid_unknown_payload_is_unknown() {
   TEST_ASSERT_EQUAL(State::Unknown, m.state(500));
 }
 
+void test_model_remembers_the_state_seq_for_latency_echo() {
+  AlertModel m(TIMEOUT);
+  uint32_t seq = 0;
+  TEST_ASSERT_FALSE(m.lastSeq(seq));
+  feed(m, "{\"schema_version\":1,\"state\":\"NORMAL\",\"acked\":false,\"seq\":1532}", 0);
+  TEST_ASSERT_TRUE(m.lastSeq(seq));
+  TEST_ASSERT_EQUAL_UINT32(1532, seq);
+  // payload sai không đổi seq
+  feed(m, "{\"schema_version\":1,\"state\":\"BUSY\",\"acked\":false,\"seq\":9}", 10);
+  TEST_ASSERT_TRUE(m.lastSeq(seq));
+  TEST_ASSERT_EQUAL_UINT32(1532, seq);
+  // state hợp lệ không có seq: không báo seq (không bịa số)
+  feed(m, NORMAL_JSON, 20);
+  TEST_ASSERT_FALSE(m.lastSeq(seq));
+}
+
 void test_model_timeout_survives_millis_wraparound() {
   AlertModel m(TIMEOUT);
   const uint32_t t0 = 0xFFFFFFFFu - 1000;  // 1 s trước khi millis() tràn
@@ -356,6 +372,7 @@ int main(int, char**) {
   RUN_TEST(test_model_bad_payload_does_not_refresh_timeout);
   RUN_TEST(test_model_rejects_empty_and_oversized);
   RUN_TEST(test_model_valid_unknown_payload_is_unknown);
+  RUN_TEST(test_model_remembers_the_state_seq_for_latency_echo);
   RUN_TEST(test_model_timeout_survives_millis_wraparound);
   RUN_TEST(test_outputs_follow_the_design_table);
   RUN_TEST(test_led_and_buzzer_levels);

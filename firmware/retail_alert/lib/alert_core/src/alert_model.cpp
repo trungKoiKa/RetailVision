@@ -54,6 +54,8 @@ bool AlertModel::onStatePayload(const char* json, size_t len, uint32_t nowMs) {
   memcpy(alertId_, id, sizeof(alertId_));
   hasValid_ = true;
   lastValidMs_ = nowMs;
+  hasSeq_ = doc["seq"].is<uint32_t>();
+  seq_ = hasSeq_ ? doc["seq"].as<uint32_t>() : 0;
   return true;
 }
 
@@ -67,6 +69,12 @@ bool AlertModel::acked(uint32_t nowMs) const { return state(nowMs) == State::Ove
 
 const char* AlertModel::alertId(uint32_t nowMs) const {
   return state(nowMs) == State::Overload ? alertId_ : "";
+}
+
+bool AlertModel::lastSeq(uint32_t& out) const {
+  if (!hasValid_ || !hasSeq_) return false;
+  out = seq_;
+  return true;
 }
 
 }  // namespace rv

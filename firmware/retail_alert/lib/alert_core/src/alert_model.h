@@ -24,11 +24,15 @@ class AlertModel {
   // Chỉ có nghĩa khi OVERLOAD; ngoài ra trả false / chuỗi rỗng.
   bool acked(uint32_t nowMs) const;
   const char* alertId(uint32_t nowMs) const;
+  // `seq` của state hợp lệ gần nhất (dùng cho bản tin echo đo độ trễ). false nếu chưa có.
+  bool lastSeq(uint32_t& out) const;
 
  private:
   uint32_t timeoutMs_;
   bool hasValid_ = false;
   uint32_t lastValidMs_ = 0;
+  bool hasSeq_ = false;
+  uint32_t seq_ = 0;
   State state_ = State::Unknown;
   bool acked_ = false;
   char alertId_[kUuidLen + 1] = "";
