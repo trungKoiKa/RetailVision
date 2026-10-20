@@ -85,6 +85,7 @@ class EdgeConfig(BaseModel):
     alert: AlertConfig = AlertConfig()
     health: HealthConfig = HealthConfig()
     mqtt: Optional[MqttConfig] = None  # không khai báo: chạy không gửi MQTT
+    settings_file: Optional[Path] = None  # nơi lưu ngưỡng đã đổi từ web; không khai báo thì không lưu
 
 
 def _resolve(base: Path, value: Optional[Path]) -> Optional[Path]:
@@ -102,6 +103,7 @@ def load_config(path: Path | str) -> EdgeConfig:
     base = yaml_path.parent
     config.source.path = _resolve(base, config.source.path)
     config.model.weights = _resolve(base, config.model.weights)
+    config.settings_file = _resolve(base, config.settings_file)
     if "/" in config.model.tracker or "\\" in config.model.tracker or config.model.tracker.startswith("."):
         # đường dẫn tới file cấu hình tracker: tương đối theo file YAML.
         # Tên có sẵn như 'bytetrack.yaml' giữ nguyên cho ultralytics.

@@ -99,7 +99,7 @@ Tài liệu trả lời: làm gì trước, đang ở đâu. Mỗi phần chỉ 
 
 - [x] V004, đăng nhập session, CSRF, ADMIN/MANAGER kiểm ở API.
 - [x] Báo cáo giờ/ngày, coverage, gap; alerts phân trang; CSV (T21). *(backend; trang web Footfall/Alerts/Devices ở lát 10c)*
-- [ ] (P1) Settings: V005, PENDING/APPLIED/REJECTED, revision cũ không ghi đè.
+- [x] (P1) Settings: V005, PENDING/APPLIED/REJECTED, revision cũ không ghi đè. *(backend + edge; trang web ở lát 10c)*
 - [ ] (P1) OLED.
 
 **Gate:** báo cáo không biến thiếu dữ liệu thành 0; gọi thẳng API sai quyền bị chặn.
@@ -137,3 +137,4 @@ Cắt theo thứ tự: settings web → CSV → vai trò MANAGER → NCNN 416 �
 | 2026-10-21 | 7 | Frontend Vite/React: trang Tổng quan; 16 test (vitest), typecheck và build sạch; kiểm trên Chrome với backend thật: hiện OVERLOAD 5 người, tắt backend thì banner lỗi và mọi số liệu thành "—" | Chưa có Login/Footfall/Alerts/Devices (Phần 10) | Phần 8-9 |
 | 2026-10-21 | 8 | Công cụ benchmark (`bench.py`, `export_ncnn.py`, `sysmetrics`), `retail-edge.service`, chrony, `install_edge.sh`, cấu hình camera mẫu; 109 test edge xanh; NCNN 320/416 xuất được và chạy trong pipeline thật trên laptop (320 chỉ thấy 1/3 lượt trên clip VIRAT: cần kiểm kích thước với cảnh thật) | Chưa có số đo Pi, chưa cài thử trên Pi | Phần 9 |
 | 2026-10-21 | 9 | Phục hồi lỗi: camera mất/chưa cắm (UNKNOWN, tự phục hồi), broker dừng/restart, backend tắt, DB sập thật, broker lên muộn; sửa 3 lỗi thật (edge thoát khi chưa có camera, Ultralytics gọi ra Internet, backend phục hồi chậm khi DB sập); edge 127 test, backend 59 test, frontend 18 test xanh | Chưa thử trên Pi/camera/ESP32 thật | Phần 10 |
+| 2026-10-21 | 10b | Đổi ngưỡng từ web (FR-09, P1): backend `PUT /api/settings` (PENDING/APPLIED/REJECTED/UNCONFIRMED), edge áp dụng nguyên bộ, revision cũ bị từ chối, lệnh trùng không áp dụng hai lần, lưu qua restart; edge 164 test, backend 99 test; kiểm chéo ngôn ngữ thật: edge Python thật ↔ Mosquitto ↔ backend Java thật, đổi hai lần qua API đều APPLIED, file lưu và `settings_revision` trong state khớp | Chưa có trang web (10c) | 10c |

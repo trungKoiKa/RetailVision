@@ -22,5 +22,6 @@ public record OverviewResponse(Today today, Live live, AlertView lastAlert, Stri
             Instant observedAt,
             Double ageSeconds,
             boolean stale,
-            String configVersion) {}
+            String configVersion,
+            Integer settingsRevision) {}
 }

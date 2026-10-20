@@ -77,6 +77,10 @@ Edge gửi `state` (QoS 0, mỗi giây), `events/crossing`, `events/alert`, `tel
 
 Khi nối lại sau mất mạng, paho giữ tối đa 5000 bản tin QoS 1 trong RAM; edge tắt đột ngột thì phần chưa gửi bị mất.
 
+### Đổi ngưỡng từ web (P1)
+
+Edge nghe `settings/set` (QoS 1) và trả `settings/result`. Quy tắc: áp dụng nguyên bộ hoặc từ chối; lệnh dựa trên revision cũ bị từ chối; cùng `request_id` giao lại thì trả lại đúng kết quả cũ và không áp dụng lần hai; giá trị sai (ví dụ `off_count >= on_count`) thì giữ cấu hình hiện tại. Cảnh báo đang mở kết thúc với `CONFIG_CHANGED`. Ngưỡng và revision đã áp dụng được lưu ở `settings_file` trong file cấu hình và nạp lại khi khởi động (file hỏng thì dùng giá trị trong cấu hình). `state` luôn báo `settings_revision` hiện tại.
+
 ### Giả lập edge (thử ESP32/backend khi chưa có camera)
 
 ```bash

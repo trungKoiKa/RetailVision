@@ -61,15 +61,15 @@ public class OverviewService {
     private OverviewResponse.Live live() {
         var snapshot = liveCache.get(edgeId);
         if (snapshot.isEmpty()) {
-            return new OverviewResponse.Live("UNKNOWN", null, null, false, null, null, true, null);
+            return new OverviewResponse.Live("UNKNOWN", null, null, false, null, null, true, null, null);
         }
         var s = snapshot.get();
         double age = liveCache.ageSeconds(s);
         if (liveCache.isStale(s)) {
             // dữ liệu cũ: không biết hiện tại, trả UNKNOWN và null (không phải 0)
-            return new OverviewResponse.Live("UNKNOWN", null, null, false, s.observedAt(), age, true, s.configVersion());
+            return new OverviewResponse.Live("UNKNOWN", null, null, false, s.observedAt(), age, true, s.configVersion(), s.settingsRevision());
         }
         return new OverviewResponse.Live(
-                s.state(), s.queueCount(), s.alertId(), s.acked(), s.observedAt(), age, false, s.configVersion());
+                s.state(), s.queueCount(), s.alertId(), s.acked(), s.observedAt(), age, false, s.configVersion(), s.settingsRevision());
     }
 }

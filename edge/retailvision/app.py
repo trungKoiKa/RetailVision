@@ -22,10 +22,12 @@ from pydantic import ValidationError
 from retailvision.config.loader import load_config
 from retailvision.pipeline.capture import CameraSource, VideoFileSource
 from retailvision import __version__
+from retailvision.config.settings import OperatingSettings, SettingsStore
 from retailvision.messaging.bridge import EdgeMessenger
 from retailvision.messaging.mqtt_client import MqttLink
 from retailvision.messaging.payloads import EnvelopeFactory
 from retailvision.messaging.topics import Topics
+from retailvision.pipeline.settings_service import SettingsService
 from retailvision.pipeline.runner import (
     JsonlSink,
     Pipeline,
@@ -100,7 +102,7 @@ def _build_messenger(config) -> Optional[EdgeMessenger]:
         password=os.environ.get("RV_MQTT_PASS"),
         will=messenger.will(),
         on_connect_messages=messenger.hello,
-        subscriptions=[(topics.operator_ack, 0)],
+        subscriptions=[(topics.operator_ack, 0), (topics.settings_set, 1)],
     )
     messenger.attach(link)
     return messenger
@@ -127,6 +129,7 @@ def run(args: argparse.Namespace) -> int:
     )
 
     messenger = None if args.no_mqtt else _build_messenger(config)
+    settings = SettingsService.start(OperatingSettings.from_config(config), SettingsStore(config.settings_file))
     counts = _Counts()
     out = open_events_file(args.events_out)
     sink = _CountingSink(JsonlSink(out), counts)
@@ -135,7 +138,7 @@ def run(args: argparse.Namespace) -> int:
         if args.source is not None or config.source.type == "video":
             path = args.source or config.source.path
             source = VideoFileSource(path)
-            pipeline = Pipeline(config, source.frame_size)
+            pipeline = Pipeline(config, source.frame_size, settings.current, settings.revision)
             writer = None
             if args.video_out is not None:
                 args.video_out.parent.mkdir(parents=True, exist_ok=True)
@@ -173,6 +176,7 @@ def run(args: argparse.Namespace) -> int:
                     sink,
                     observer=observer if observer_needed else None,
                     messenger=messenger,
+                    settings=settings,
                 )
             finally:
                 processed = drawn["n"] if observer_needed else processed
@@ -182,7 +186,7 @@ def run(args: argparse.Namespace) -> int:
                     cv2.destroyAllWindows()
             source.close()
         else:
-            processed = _run_camera(config, detector, sink, messenger)
+            processed = _run_camera(config, detector, sink, messenger, settings)
     except KeyboardInterrupt:
         print("Dừng theo yêu cầu.", file=sys.stderr)
     finally:
@@ -194,11 +198,11 @@ def run(args: argparse.Namespace) -> int:
     return 0
 
 
-def _run_camera(config, detector, sink: _CountingSink, messenger: Optional[EdgeMessenger]) -> int:
+def _run_camera(config, detector, sink: _CountingSink, messenger: Optional[EdgeMessenger], settings) -> int:
     """Chạy camera thật cho đến khi nhấn Ctrl+C. Camera mất/chưa cắm thì vào UNKNOWN và tự phục hồi."""
     source = CameraSource(config.source.index, config.source.width, config.source.height)
     try:
-        return run_camera_loop(config, source.read, detector, sink, messenger)
+        return run_camera_loop(config, source.read, detector, sink, messenger, settings)
     finally:
         source.close()
 

@@ -26,6 +26,7 @@ public class LiveStateCache {
             boolean acked,
             Instant observedAt,
             String configVersion,
+            Integer settingsRevision,
             Instant receivedAt) {}
 
     private final Map<String, Snapshot> byDevice = new ConcurrentHashMap<>();
@@ -40,7 +41,7 @@ public class LiveStateCache {
     public void update(StateMessage m) {
         byDevice.put(
                 m.deviceId(),
-                new Snapshot(m.state(), m.queueCount(), m.alertId(), m.acked(), m.observedAt(), m.configVersion(), clock.instant()));
+                new Snapshot(m.state(), m.queueCount(), m.alertId(), m.acked(), m.observedAt(), m.configVersion(), m.settingsRevision(), clock.instant()));
     }
 
     /** Xoá toàn bộ state đang giữ (dùng trong test để cô lập các ca). */
