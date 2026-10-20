@@ -59,12 +59,14 @@ Tài liệu trả lời: làm gì trước, đang ở đâu. Mỗi phần chỉ 
 
 ## Phần 6 — Backend lát cắt (~8 giờ)
 
-- [ ] Spring Boot + Flyway V001–V003, `ddl-auto=validate`.
-- [ ] Paho `cleanSession=false`, manual ack sau commit; dedupe `event_id`.
-- [ ] `GET /api/overview`, `/alerts`, `/devices`, `/health`.
-- [ ] T15; lỗi DB → không ack, broker gửi lại.
+- [x] Spring Boot + Flyway V001–V003, `ddl-auto=validate`.
+- [x] Paho `cleanSession=false`, manual ack sau commit; dedupe `event_id`.
+- [x] `GET /api/overview`, `/alerts`, `/devices`, `/health`.
+- [x] T15; lỗi DB → không ack, broker gửi lại.
 
 **Gate:** sự kiện thật từ Pi vào DB đúng một lần.
+
+*Trạng thái:* chưa đạt với Pi thật. Đã chạy chuỗi edge giả → Mosquitto → backend → PostgreSQL → API và 54 test (PostgreSQL, Mosquitto thật).
 
 ## Phần 7 — Frontend lát cắt (~6 giờ)
 
@@ -127,3 +129,4 @@ Cắt theo thứ tự: settings web → CSV → vai trò MANAGER → NCNN 416 �
 | 2026-10-20 | 4 | Ghi thời điểm lượt qua vạch bằng nội suy; đoạn VIRAT 60 s: 3 TP/0 FP/0 FN ở tol 1,0 s, 2 TP/1 FP/1 FN ở tol 0,5 s (trước: 2/1/1 và 0/3/3); `pytest` 57 xanh | Một clip, 3 nhãn; lệch ~0,8 s ở người giữa nhóm do bbox bị che | Phần 1: smoke test trên Pi |
 | 2026-10-20 | 5 | Edge gửi MQTT (state, crossing, alert, telemetry, status+LWT), nhận ACK; `fake_publisher`; Mosquitto conf + ACL; `check_acl.py` 9/9; luồng edge giả → broker → ESP32 giả → ACK chạy đúng; `pytest` 87 xanh (gồm test broker thật) | Chưa có firmware, chưa thử trên Pi | Firmware ESP32 |
 | 2026-10-21 | 5 | Khung firmware PlatformIO: logic thuần `lib/alert_core` (25 test native xanh), task mạng, `main.cpp`; biên dịch `esp32dev` thành công (RAM 13,9%, Flash 59%, không cảnh báo); bản tin C++ `operator-ack`/`status` qua JSON Schema thật | Chưa nạp lên ESP32, chưa thử với broker; `node01/status` cần giờ UTC (xem README firmware) | Bạn đấu mạch, nạp, thử với `fake_publisher` |
+| 2026-10-21 | 6 | Backend Spring: Flyway V001–V003, nhận MQTT (cleanSession=false, ack sau commit, chống trùng event_id), API overview/alerts/devices/health; 54 test xanh (PostgreSQL + Mosquitto thật: trùng event_id, DB lỗi → gửi lại, backend tắt rồi bật vẫn nhận đủ); chạy thử edge giả → backend → DB → API | Chưa thử với Pi thật; chưa đăng nhập | Phần 7: frontend Overview |

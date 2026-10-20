@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: retailvision-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/retailvision}
+    username: ${SPRING_DATASOURCE_USERNAME:retailvision}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  flyway:
+    enabled: true
+
+server:
+  port: 8080
+
+retailvision:
+  timezone: Asia/Ho_Chi_Minh
+  # live state quá ngần này giây thì coi là cũ (edge phát state mỗi giây)
+  stale-seconds: 5
+  mqtt:
+    enabled: true
+    host: ${RV_MQTT_HOST:127.0.0.1}
+    port: ${RV_MQTT_PORT:1883}
+    username: ${RV_MQTT_BACKEND_USER:backend01}
+    password: ${RV_MQTT_BACKEND_PASS:}
+    client-id: backend01
+    site-id: site01
+    edge-id: edge01
+    node-id: node01
+    # sau lỗi ghi DB: ngắt kết nối rồi nối lại sau ngần này giây để broker gửi lại bản tin chưa ack
+    restart-delay-seconds: 5
