@@ -23,27 +23,29 @@ Tài liệu trả lời: làm gì trước, đang ở đâu. Mỗi phần chỉ 
 
 ## Phần 2 — Contract (~4 giờ)
 
-- [ ] JSON Schema trong `contracts/mqtt/` theo [bảng topic](../contracts/mqtt/README.md).
-- [ ] Ví dụ hợp lệ/sai/trùng trong `contracts/examples/`, script validate.
+- [x] JSON Schema trong `contracts/mqtt/` theo [bảng topic](../contracts/mqtt/README.md).
+- [x] Ví dụ hợp lệ/sai/trùng trong `contracts/examples/`, script validate.
 
 **Gate:** ví dụ hợp lệ qua, ví dụ sai bị từ chối.
 
 ## Phần 3 — Analytics thuần (~8 giờ)
 
-- [ ] `core/clock.py`, `geometry.py`, `crossing.py`, `queue.py`, `alert_state.py`.
-- [ ] Unit test bằng tọa độ/clock giả: T01–T10, T14, T16, T23.
+- [x] `core/clock.py`, `geometry.py`, `crossing.py`, `queue.py`, `alert_state.py`.
+- [x] Unit test bằng tọa độ/clock giả: T01–T10, T14, T16, T23.
 
 **Gate:** `pytest` xanh; analytics không import OpenCV/Ultralytics.
 
 ## Phần 4 — Pipeline edge và công cụ (~8 giờ)
 
-- [ ] Loader YAML + validation.
-- [ ] Capture camera/file video, frame mới nhất, timestamp video khi replay, reconnect.
-- [ ] Detector/tracker/runner, tọa độ về frame gốc.
+- [x] Loader YAML + validation.
+- [x] Capture camera/file video, frame mới nhất, timestamp video khi replay, reconnect.
+- [x] Detector/tracker/runner, tọa độ về frame gốc.
 - [ ] `tools/calibrate.py`; preview MJPEG có công tắc.
 - [ ] Log FPS và tuổi frame; cùng clip chạy hai lần cùng kết quả.
 
 **Gate:** đếm cửa và vùng chờ đúng trên video quay sẵn.
+
+*Trạng thái:* chưa đạt. Mới thử trên một đoạn VIRAT 60 s (3 lượt IN, nhãn tay do AI ước lượng, chưa kiểm độc lập), chưa phải cảnh cửa hàng; vùng chờ và cảnh báo chưa được thử với video có người. Cần clip quay thật.
 
 ## Phần 5 — MQTT và ESP32: demo lõi (~10 giờ)
 
@@ -121,3 +123,5 @@ Cắt theo thứ tự: settings web → CSV → vai trò MANAGER → NCNN 416 �
 | Ngày | Phần/task | Kết quả, bằng chứng | Blocker | Tiếp theo |
 | --- | --- | --- | --- | --- |
 | 2026-10-17 | 0 | ADR-0001, gộp tài liệu | — | Phần 1 + 2 |
+| 2026-10-19 | 2, 3, 4 | Contract + validate; analytics 34 test; pipeline, CLI, công cụ gán nhãn và chấm điểm; `pytest` 55 xanh | Chưa có clip cảnh cửa hàng | Sửa độ lệch thời điểm đếm |
+| 2026-10-20 | 4 | Ghi thời điểm lượt qua vạch bằng nội suy; đoạn VIRAT 60 s: 3 TP/0 FP/0 FN ở tol 1,0 s, 2 TP/1 FP/1 FN ở tol 0,5 s (trước: 2/1/1 và 0/3/3); `pytest` 57 xanh | Một clip, 3 nhãn; lệch ~0,8 s ở người giữa nhóm do bbox bị che | Phần 1: smoke test trên Pi |
