@@ -9,6 +9,7 @@ Ví dụ:
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
@@ -20,7 +21,20 @@ from pydantic import ValidationError
 
 from retailvision.config.loader import load_config
 from retailvision.pipeline.capture import CameraSource, Frame, VideoFileSource
-from retailvision.pipeline.runner import JsonlSink, Pipeline, open_events_file, run_pipeline
+from retailvision import __version__
+from retailvision.messaging.bridge import EdgeMessenger
+from retailvision.messaging.mqtt_client import MqttLink
+from retailvision.messaging.payloads import EnvelopeFactory
+from retailvision.messaging.topics import Topics
+from retailvision.pipeline.runner import (
+    JsonlSink,
+    Pipeline,
+    apply_acks,
+    open_events_file,
+    process_frame,
+    run_pipeline,
+)
+from retailvision.resilience.health import clock_synced
 from retailvision.presentation.overlay import draw
 
 CAMERA_STALE_POLL_S = 0.01
@@ -34,6 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--events-out", type=Path, help="ghi sự kiện JSONL (mặc định: stdout)")
     parser.add_argument("--video-out", type=Path, help="ghi video đã vẽ vạch, vùng chờ, ID người (chỉ khi xử lý file)")
     parser.add_argument("--show", action="store_true", help="mở cửa sổ xem trực tiếp; nhấn q để dừng")
+    parser.add_argument("--no-mqtt", action="store_true", help="không gửi MQTT dù cấu hình có mục mqtt")
     parser.add_argument("--check-config", action="store_true", help="chỉ kiểm tra cấu hình rồi thoát")
     return parser
 
@@ -70,6 +85,29 @@ class _CountingSink:
         self._sink.write(events)
 
 
+def _build_messenger(config) -> Optional[EdgeMessenger]:
+    """Tạo kết nối MQTT nếu cấu hình có mục `mqtt`. Tài khoản lấy từ RV_MQTT_USER / RV_MQTT_PASS."""
+    if config.mqtt is None:
+        return None
+    topics = Topics(config.site_id, config.device_id, config.node_id)
+    factory = EnvelopeFactory(config.site_id, config.device_id, config.config_version)
+    messenger = EdgeMessenger(
+        None, factory, topics, profile=config.profile, version=__version__, clock_synced=clock_synced
+    )
+    link = MqttLink(
+        host=os.environ.get("RV_MQTT_HOST", config.mqtt.host),
+        port=int(os.environ.get("RV_MQTT_PORT", config.mqtt.port)),
+        client_id=config.device_id,
+        username=os.environ.get("RV_MQTT_USER"),
+        password=os.environ.get("RV_MQTT_PASS"),
+        will=messenger.will(),
+        on_connect_messages=messenger.hello,
+        subscriptions=[(topics.operator_ack, 0)],
+    )
+    messenger.attach(link)
+    return messenger
+
+
 def _wait_first_frame(read, timeout_s: float = 10.0) -> Frame:
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
@@ -100,6 +138,7 @@ def run(args: argparse.Namespace) -> int:
         tracker=config.model.tracker,
     )
 
+    messenger = None if args.no_mqtt else _build_messenger(config)
     counts = _Counts()
     out = open_events_file(args.events_out)
     sink = _CountingSink(JsonlSink(out), counts)
@@ -139,7 +178,14 @@ def run(args: argparse.Namespace) -> int:
 
             observer_needed = writer is not None or args.show
             try:
-                run_pipeline(pipeline, source.read, detector, sink, observer=observer if observer_needed else None)
+                run_pipeline(
+                    pipeline,
+                    source.read,
+                    detector,
+                    sink,
+                    observer=observer if observer_needed else None,
+                    messenger=messenger,
+                )
             finally:
                 processed = drawn["n"] if observer_needed else processed
                 if writer is not None:
@@ -148,17 +194,19 @@ def run(args: argparse.Namespace) -> int:
                     cv2.destroyAllWindows()
             source.close()
         else:
-            processed = _run_camera(config, detector, sink)
+            processed = _run_camera(config, detector, sink, messenger)
     except KeyboardInterrupt:
         print("Dừng theo yêu cầu.", file=sys.stderr)
     finally:
+        if messenger is not None:
+            messenger.close()
         if args.events_out is not None:
             out.close()
     print(_summary(counts, processed), file=sys.stderr)
     return 0
 
 
-def _run_camera(config, detector, sink: _CountingSink) -> int:
+def _run_camera(config, detector, sink: _CountingSink, messenger: Optional[EdgeMessenger]) -> int:
     """Chạy camera thật cho đến khi nhấn Ctrl+C. Mất khung hình quá lâu thì vào UNKNOWN."""
     source = CameraSource(config.source.index, config.source.width, config.source.height)
     try:
@@ -176,12 +224,25 @@ def _run_camera(config, detector, sink: _CountingSink) -> int:
             if frame is not None:
                 last_frame_at = now
                 is_stale = False
-                tracks = detector.process(frame.image)
-                sink.write(pipeline.step(tracks, frame.ts))
+                process_frame(
+                    pipeline,
+                    detector,
+                    sink,
+                    messenger,
+                    frame,
+                    frame_age_ms=lambda f: max(0, int((time.monotonic() - f.ts) * 1000)),
+                )
                 processed += 1
-            elif not is_stale and now - last_frame_at > stale_s:
-                is_stale = True
-                sink.write(pipeline.stale(now))
+            else:
+                if not is_stale and now - last_frame_at > stale_s:
+                    is_stale = True
+                    events = pipeline.stale(now)
+                    sink.write(events)
+                    if messenger is not None:
+                        messenger.publish_events(now, events)
+                if messenger is not None:
+                    apply_acks(pipeline, messenger, sink, now)
+                    messenger.on_idle(now, pipeline)
             time.sleep(CAMERA_STALE_POLL_S)
             frame = source.read()
     finally:

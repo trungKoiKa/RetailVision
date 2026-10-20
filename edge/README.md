@@ -64,3 +64,28 @@ Số đo trên đoạn 60 giây (1798 khung), laptop CPU, không có nhãn đún
 | 1280, tracker đã chỉnh (`match_thresh` 0.9) | 13 | 1 | 1 |
 
 Kết quả đếm cuối cùng trên đoạn này: 3 lượt IN, 0 OUT. Chưa đối chiếu với nhãn tay nên chưa biết đúng bao nhiêu.
+
+## Gửi MQTT
+
+Thêm mục `mqtt:` (host, port) vào file cấu hình; không có mục này thì edge chạy không gửi gì. Tài khoản lấy từ `RV_MQTT_USER`, `RV_MQTT_PASS`. Tắt tạm bằng `--no-mqtt`.
+
+```bash
+RV_MQTT_USER=edge01 RV_MQTT_PASS=... python -m retailvision.app --config <file.yaml> --source <video.mp4>
+```
+
+Edge gửi `state` (QoS 0, mỗi giây), `events/crossing`, `events/alert`, `telemetry` (mỗi phút) và `status` (retained, kèm Last Will); nhận `operator-ack` từ ESP32. Đã kiểm trên Windows với Mosquitto 2.1.2 thật; chưa chạy trên Pi.
+
+Khi nối lại sau mất mạng, paho giữ tối đa 5000 bản tin QoS 1 trong RAM; edge tắt đột ngột thì phần chưa gửi bị mất.
+
+### Giả lập edge (thử ESP32/backend khi chưa có camera)
+
+```bash
+python -m retailvision.tools.fake_publisher --scenario overload --hold 30 --period 60
+python -m retailvision.tools.fake_publisher --scenario overload --dry-run --seconds 12   # chỉ in, không kết nối
+```
+
+Kịch bản: `normal`, `crossings`, `overload`, `unknown`. Đang OVERLOAD mà nhận `operator-ack` đúng `alert_id` thì đặt `acked=true` và gửi sự kiện ACK; cảnh báo vẫn kéo dài hết `--hold`.
+
+### Test
+
+`python -m pytest` chạy cả `tests/integration/test_mqtt_broker.py`, tự bật Mosquitto cục bộ (cổng ngẫu nhiên, không tài khoản) và bỏ qua nếu không tìm thấy `mosquitto`. Đặt `RV_MOSQUITTO_BIN` nếu cài ở chỗ khác.

@@ -1,0 +1,20 @@
+# ACL mẫu theo contracts/mqtt/README.md, site01. Chép thành /etc/mosquitto/acl.
+# Đổi `site01` nếu dùng site_id khác.
+
+user edge01
+topic write retailvision/v1/site01/edge01/state
+topic write retailvision/v1/site01/edge01/events/#
+topic write retailvision/v1/site01/edge01/telemetry
+topic write retailvision/v1/site01/edge01/status
+topic write retailvision/v1/site01/edge01/settings/result
+topic read retailvision/v1/site01/edge01/settings/set
+topic read retailvision/v1/site01/node01/events/operator-ack
+
+user node01
+topic write retailvision/v1/site01/node01/#
+topic read retailvision/v1/site01/edge01/state
+
+user backend01
+topic write retailvision/v1/site01/edge01/settings/set
+topic read retailvision/v1/site01/edge01/#
+topic read retailvision/v1/site01/node01/status

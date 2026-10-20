@@ -3,3 +3,4 @@ pyyaml==6.0.3
 pydantic==2.14.1
 numpy==2.5.4
 opencv-python-headless==5.0.0
+paho-mqtt==2.1.0

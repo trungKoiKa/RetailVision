@@ -35,3 +35,8 @@ alert:
 
 health:
   stale_seconds: 3
+
+# Bỏ comment để gửi MQTT. Tài khoản lấy từ biến môi trường RV_MQTT_USER / RV_MQTT_PASS, không ghi ở đây.
+# mqtt:
+#   host: 127.0.0.1
+#   port: 1883

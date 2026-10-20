@@ -10,7 +10,7 @@ import json
 import sys
 from dataclasses import asdict
 from pathlib import Path
-from typing import Callable, Iterable, Optional, Protocol, TextIO
+from typing import TYPE_CHECKING, Callable, Iterable, Optional, Protocol, TextIO
 
 from retailvision.analytics.alert_state import AlertSettings, AlertStateMachine
 from retailvision.analytics.crossing import LineCounter
@@ -19,6 +19,9 @@ from retailvision.analytics.queue import QueueZone
 from retailvision.config.loader import EdgeConfig
 from retailvision.core.types import AlertTransition, CrossingEvent, Track
 from retailvision.pipeline.capture import Frame
+
+if TYPE_CHECKING:
+    from retailvision.messaging.bridge import EdgeMessenger
 
 
 class Detector(Protocol):
@@ -75,6 +78,10 @@ class Pipeline:
             events.append(_alert_event(transition))
         return events
 
+    def handle_ack(self, alert_id: str, ack_id: str, device_id: str, ts: float) -> list[dict]:
+        """ACK của nhân viên: chỉ ghi nhận cho đúng alert đang mở, lần đầu. Không đóng OVERLOAD."""
+        return [_alert_event(t) for t in self.alert.on_ack(alert_id, ack_id, device_id, ts)]
+
     def stale(self, ts: float) -> list[dict]:
         """Không có khung hình mới đủ lâu: vào UNKNOWN, alert đang mở kết thúc."""
         return [_alert_event(t) for t in self.alert.on_stale(ts)]
@@ -100,24 +107,54 @@ class JsonlSink:
         self._stream.flush()
 
 
+def apply_acks(pipeline: Pipeline, messenger: "Optional[EdgeMessenger]", sink: JsonlSink, ts: float) -> None:
+    """Đưa ACK nhận từ ESP32 vào máy trạng thái; ACK được chấp nhận thì ghi và gửi đi một sự kiện alert."""
+    if messenger is None:
+        return
+    for ack in messenger.poll_acks():
+        events = pipeline.handle_ack(ack["alert_id"], ack["ack_id"], ack["device_id"], ts)
+        if events:
+            sink.write(events)
+            messenger.publish_events(ts, events)
+
+
+def process_frame(
+    pipeline: Pipeline,
+    detector: Detector,
+    sink: JsonlSink,
+    messenger: "Optional[EdgeMessenger]",
+    frame: Frame,
+    frame_age_ms: Callable[[Frame], int] = lambda frame: 0,
+) -> list[Track]:
+    """Xử lý một khung hình: ACK đang chờ → phát hiện + theo dõi → phân tích → ghi/gửi sự kiện."""
+    apply_acks(pipeline, messenger, sink, frame.ts)
+    tracks = detector.process(frame.image)
+    events = pipeline.step(tracks, frame.ts)
+    sink.write(events)
+    if messenger is not None:
+        messenger.on_step(frame.ts, events, pipeline, frame_age_ms(frame))
+    return tracks
+
+
 def run_pipeline(
     pipeline: Pipeline,
     read_frame: Callable[[], Optional[Frame]],
     detector: Detector,
     sink: JsonlSink,
     observer: Optional[Callable[[Frame, list[Track], Pipeline], None]] = None,
+    messenger: "Optional[EdgeMessenger]" = None,
 ) -> int:
     """Lặp đến khi nguồn hết khung hình (video) hoặc dừng (camera). Trả về số khung đã xử lý.
 
     `observer` được gọi sau mỗi khung với khung ảnh, các track và pipeline (để vẽ hình minh hoạ).
+    `messenger`, nếu có, gửi sự kiện/state/telemetry qua MQTT và nhận ACK.
     """
     processed = 0
     while True:
         frame = read_frame()
         if frame is None:
             break
-        tracks = detector.process(frame.image)
-        sink.write(pipeline.step(tracks, frame.ts))
+        tracks = process_frame(pipeline, detector, sink, messenger, frame)
         processed += 1
         if observer:
             observer(frame, tracks, pipeline)
