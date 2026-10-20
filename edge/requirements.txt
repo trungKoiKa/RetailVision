@@ -1,4 +1,5 @@
-# Phụ thuộc chạy edge. Ultralytics (YOLO) sẽ thêm khi chạy thử model thật.
+# Phụ thuộc chạy edge. Ultralytics kéo theo torch; bản đã chạy trên laptop Windows.
+ultralytics==8.3.253
 pyyaml==6.0.3
 pydantic==2.14.1
 numpy==2.5.4
