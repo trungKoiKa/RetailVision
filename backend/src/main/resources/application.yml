@@ -26,9 +26,20 @@ spring:
 
 server:
   port: 8080
+  servlet:
+    session:
+      timeout: 8h
+      cookie:
+        name: RVSESSION
+        http-only: true
+        same-site: lax
+        # secure: bật khi phục vụ qua HTTPS; trong LAN dùng HTTP thì để tắt
 
 retailvision:
   timezone: Asia/Ho_Chi_Minh
+  admin:
+    username: ${RV_ADMIN_USER:}
+    password: ${RV_ADMIN_PASS:}
   # live state quá ngần này giây thì coi là cũ (edge phát state mỗi giây)
   stale-seconds: 5
   mqtt:

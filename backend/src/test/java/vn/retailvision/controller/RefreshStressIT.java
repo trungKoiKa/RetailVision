@@ -2,11 +2,7 @@ package vn.retailvision.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -34,9 +30,14 @@ class RefreshStressIT extends PostgresIT {
     @Autowired
     javax.sql.DataSource dataSource;
 
+    @Autowired
+    vn.retailvision.service.auth.UserService users;
+
     @Test
     void manyDashboardRefreshesKeepConnectionsAndThreadsBounded() throws Exception {
-        HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+        users.create(new vn.retailvision.dto.request.CreateUserRequest("stress1", "stress-pass-1", "MANAGER"));
+        vn.retailvision.support.HttpApi session = new vn.retailvision.support.HttpApi(port);
+        assertThat(session.login("stress1", "stress-pass-1").statusCode()).isEqualTo(200);
         String[] paths = {"/api/overview", "/api/alerts?size=20", "/api/devices", "/api/health"};
         int threadsBefore = Thread.activeCount();
 
@@ -49,9 +50,7 @@ class RefreshStressIT extends PostgresIT {
                 for (int i = 0; i < 150; i++) {
                     String path = paths[(offset + i) % paths.length];
                     long start = System.nanoTime();
-                    HttpResponse<String> response = client.send(
-                            HttpRequest.newBuilder(URI.create("http://localhost:" + port + path)).GET().build(),
-                            HttpResponse.BodyHandlers.ofString());
+                    HttpResponse<String> response = session.get(path);
                     worst = Math.max(worst, (System.nanoTime() - start) / 1_000_000);
                     assertThat(response.statusCode()).as(path).isEqualTo(200);
                 }

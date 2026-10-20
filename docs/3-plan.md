@@ -97,8 +97,8 @@ Tài liệu trả lời: làm gì trước, đang ở đâu. Mỗi phần chỉ 
 
 ## Phần 10 — Nghiệp vụ web (~10 giờ)
 
-- [ ] V004, đăng nhập session, CSRF, ADMIN/MANAGER kiểm ở API.
-- [ ] Báo cáo giờ/ngày, coverage, gap; alerts phân trang; CSV (T21).
+- [x] V004, đăng nhập session, CSRF, ADMIN/MANAGER kiểm ở API.
+- [x] Báo cáo giờ/ngày, coverage, gap; alerts phân trang; CSV (T21). *(backend; trang web Footfall/Alerts/Devices ở lát 10c)*
 - [ ] (P1) Settings: V005, PENDING/APPLIED/REJECTED, revision cũ không ghi đè.
 - [ ] (P1) OLED.
 

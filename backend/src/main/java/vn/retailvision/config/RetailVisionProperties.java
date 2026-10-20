@@ -9,7 +9,11 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record RetailVisionProperties(
         @DefaultValue("Asia/Ho_Chi_Minh") ZoneId timezone,
         @DefaultValue("5") int staleSeconds,
-        Mqtt mqtt) {
+        Mqtt mqtt,
+        @DefaultValue Admin admin) {
+
+    /** Tài khoản ADMIN đầu tiên, chỉ dùng khi bảng app_user còn rỗng (RV_ADMIN_USER / RV_ADMIN_PASS). */
+    public record Admin(String username, String password) {}
 
     public record Mqtt(
             @DefaultValue("true") boolean enabled,

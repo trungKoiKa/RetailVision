@@ -2,7 +2,7 @@
 
 Nhận sự kiện từ Mosquitto, lưu PostgreSQL, cung cấp REST API. Java 21, Spring Boot 3.5, Flyway, Eclipse Paho, PostgreSQL 17.
 
-**Trạng thái:** lát cắt Phần 6 (chưa đăng nhập, chưa báo cáo theo giờ, chưa đổi ngưỡng). 54 test xanh với PostgreSQL và Mosquitto thật; đã chạy thử cả chuỗi edge giả → Mosquitto → backend → PostgreSQL → API. Chưa chạy với Pi thật.
+**Trạng thái:** Phần 6 (nhận MQTT, lưu DB) và Phần 10a (đăng nhập, phân quyền, báo cáo giờ/ngày, CSV). 84 test xanh với PostgreSQL, Mosquitto thật (và Docker cho các ca phục hồi lỗi). Chưa có đổi ngưỡng từ web (Phần 10b). Chưa chạy với Pi thật.
 
 ## Chạy
 
@@ -27,9 +27,31 @@ Flyway tạo bảng khi khởi động (V001–V003); Hibernate chỉ kiểm kh�
 | `GET /api/overview` | Lượt vào/ra hôm nay (giờ Việt Nam), trạng thái hiện tại, cảnh báo gần nhất, thiết bị |
 | `GET /api/alerts?page=&size=` | Cảnh báo mới nhất trước; `size` ≤ 100; có `ack_latency_seconds` |
 | `GET /api/devices` | `edge01` và `node01`; chưa từng báo thì `status = UNKNOWN` |
-| `GET /api/health` | Sức khoẻ của backend: DB và kết nối MQTT |
+| `GET /api/health` | Sức khoẻ của backend: DB và kết nối MQTT (công khai) |
+| `GET /api/footfall?from=&to=&granularity=hour\|day` | Lượt vào/ra theo giờ hoặc ngày (giờ Việt Nam) kèm `coverage`, `gap`, số cảnh báo, phút OVERLOAD, số người trung bình/lớn nhất |
+| `GET /api/reports/export.csv?from=&to=&granularity=` | CSV cùng số liệu; ô không có dữ liệu để trống |
+| `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`, `POST /api/auth/password` | Đăng nhập/đăng xuất, thông tin tài khoản, đổi mật khẩu |
+| `GET/POST /api/users`, `PATCH /api/users/{id}` | Quản lý tài khoản (chỉ ADMIN): tạo, đổi vai trò, vô hiệu hóa, đặt lại mật khẩu |
 
 Dữ liệu cũ hoặc chưa có thì trả `UNKNOWN` và `null`, không trả 0: `live` chuyển UNKNOWN, `queue_count = null`, `stale = true` khi quá 5 giây chưa nhận `state` (tính theo giờ máy chủ lúc nhận, không tin đồng hồ Pi).
+
+## Đăng nhập và phân quyền
+
+- Session cookie `RVSESSION` (HttpOnly, SameSite=Lax), hết hạn sau 8 giờ. CSRF bằng cookie `XSRF-TOKEN` + header `X-XSRF-TOKEN` cho mọi request ghi (cookie được gửi ngay cả ở phản hồi 401: SPA gọi `GET /api/auth/me` trước khi đăng nhập).
+- Vai trò `ADMIN` và `MANAGER` kiểm ở API (không chỉ ẩn nút trên web). Chưa đăng nhập: 401 JSON; sai quyền: 403 JSON. Chỉ `/api/health` công khai.
+- Mật khẩu lưu BCrypt; thông báo lỗi đăng nhập giống nhau cho tên không tồn tại và sai mật khẩu; sai 5 lần trong 10 phút khoá tên đó 5 phút (RAM, mất khi restart). Đăng nhập đổi session id (chống fixation).
+- Tài khoản ADMIN đầu tiên tạo từ `RV_ADMIN_USER` / `RV_ADMIN_PASS` khi bảng `app_user` rỗng. Không có tài khoản nào thì backend ghi cảnh báo vào log.
+- Không xóa tài khoản, chỉ vô hiệu hóa. Luôn còn ít nhất một ADMIN đang hoạt động; không tự vô hiệu hóa chính mình.
+- Cookie chưa bật `Secure` vì LAN dùng HTTP; bật khi phục vụ HTTPS (`server.servlet.session.cookie.secure`).
+
+## Báo cáo
+
+Bucket theo giờ (≤ 7 ngày) hoặc ngày (≤ 366 ngày), mốc theo `Asia/Ho_Chi_Minh`. Thiếu dữ liệu không thành 0:
+
+- `gap = true`: bucket đã qua hoặc đang diễn ra mà không có telemetry nào; `in`/`out` là `null` nếu cũng không có lượt qua vạch nào (có lượt thì vẫn báo số đó, vì đó là cận dưới).
+- `future = true`: chưa tới giờ đó, mọi số liệu `null`.
+- `coverage` = giây quan sát hợp lệ / giây đáng ra có (bucket đang diễn ra chỉ tính phần đã trôi qua). `queue_avg` có trọng số theo giây hợp lệ, bỏ phút không có số người.
+- Phút OVERLOAD chia theo giờ; cảnh báo còn mở tính tới hiện tại. Edge restart (session mới, `seq` bắt đầu lại) vẫn cộng đúng.
 
 ## Luồng nhận MQTT
 
@@ -58,7 +80,6 @@ Trong Git Bash trên Windows, `./mvnw` có thể lỗi khi tải Maven; dùng `m
 
 ## Giới hạn hiện tại
 
-- Chưa có đăng nhập và phân quyền (Phần 10): chỉ dùng trong LAN tin cậy.
-- `today.in/out` đếm theo sự kiện đã nhận; chưa kèm độ phủ quan sát nên chưa phân biệt "không có ai" với "edge tắt". Báo cáo theo giờ có `coverage` và `gap` thuộc Phần 10.
+- `today.in/out` trong `/api/overview` đếm theo sự kiện đã nhận, chưa kèm độ phủ; xem độ phủ ở `/api/footfall`.
 - `profile` trong overview lấy từ lượt qua vạch gần nhất (contract `state` không có trường này); chưa có lượt nào thì null.
 - Chưa nhận topic `settings/result` và chưa gửi `settings/set` (đổi ngưỡng từ web, mức P1).
