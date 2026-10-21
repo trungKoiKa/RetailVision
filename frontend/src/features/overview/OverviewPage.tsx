@@ -53,7 +53,7 @@ export function OverviewPage() {
 
 function LiveCard({ live, profile }: { live: Live; profile: Overview["profile"] }) {
   return (
-    <Card title="Vùng chờ" className="card-live">
+    <Card title="Vùng chờ" className={`card-live live-${live.state.toLowerCase()}`}>
       <div className="live-head">
         <StatusBadge state={live.state} />
         {profile && <span className="chip">Profile: {profile}</span>}

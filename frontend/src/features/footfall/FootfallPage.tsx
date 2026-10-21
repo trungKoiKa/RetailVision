@@ -108,10 +108,10 @@ function Report({ data }: { data: FootfallResponse }) {
               <Tooltip />
               <Legend />
               {rows.filter((r) => r.kind === "gap").map((r) => (
-                <ReferenceArea key={r.label} x1={r.label} x2={r.label} fill="#9aa6b5" fillOpacity={0.25} ifOverflow="visible" />
+                <ReferenceArea key={r.label} x1={r.label} x2={r.label} fill="var(--chart-gap)" fillOpacity={0.25} ifOverflow="visible" />
               ))}
-              <Bar dataKey="in" name="Vào" fill="#1b8a4b" />
-              <Bar dataKey="out" name="Ra" fill="#2557d6" />
+              <Bar dataKey="in" name="Vào" fill="var(--chart-in)" />
+              <Bar dataKey="out" name="Ra" fill="var(--chart-out)" />
             </BarChart>
           </ResponsiveContainer>
         </div>

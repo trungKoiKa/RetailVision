@@ -42,6 +42,7 @@ export function LoginPage() {
 
   return (
     <main className="login">
+      <div className="brand">RetailVision</div>
       <Card title="Đăng nhập RetailVision">
         {error && <Banner kind="error">{error}</Banner>}
         <form onSubmit={submit} className="form">
