@@ -77,7 +77,7 @@ describe("đăng nhập và phân quyền trên web", () => {
     ]);
     renderApp("/");
     expect(await screen.findByText("manager1 (MANAGER)")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Đăng xuất" }));
+    await userEvent.click(screen.getAllByRole("button", { name: "Đăng xuất" })[0]);
     expect(await screen.findByText("Đăng nhập RetailVision")).toBeInTheDocument();
     const logout = api.calls.find((c) => c.url === "/api/auth/logout")!;
     expect(logout.headers.get("X-XSRF-TOKEN")).toBe("csrf-abc");
