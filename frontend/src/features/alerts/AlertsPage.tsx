@@ -47,8 +47,20 @@ export function AlertsPage() {
                   <tr key={a.alert_id}>
                     <td>{formatDateTime(a.opened_at)}</td>
                     <td>{a.open_queue_count ?? "—"}</td>
-                    <td>{a.acked_at ? `${formatTime(a.acked_at)} (sau ${formatAge(a.ack_latency_seconds)})` : "Chưa ACK"}</td>
-                    <td>{a.open ? "Đang mở" : `Kết thúc ${formatTime(a.ended_at)}: ${END_REASONS[a.end_reason ?? ""] ?? "?"}`}</td>
+                    <td>
+                      {a.acked_at ? (
+                        <span className="pill pill-ack">{`${formatTime(a.acked_at)} (sau ${formatAge(a.ack_latency_seconds)})`}</span>
+                      ) : (
+                        <span className="pill pill-none">Chưa ACK</span>
+                      )}
+                    </td>
+                    <td>
+                      {a.open ? (
+                        <span className="pill pill-open">Đang mở</span>
+                      ) : (
+                        <span className="pill pill-done">{`Kết thúc ${formatTime(a.ended_at)}: ${END_REASONS[a.end_reason ?? ""] ?? "?"}`}</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

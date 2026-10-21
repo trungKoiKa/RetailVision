@@ -1,3 +1,4 @@
+import { Activity } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { ApiError } from "../../shared/api/client";
@@ -41,24 +42,43 @@ export function LoginPage() {
   }
 
   return (
-    <main className="login">
-      <div className="brand">RetailVision</div>
-      <Card title="Đăng nhập RetailVision">
-        {error && <Banner kind="error">{error}</Banner>}
-        <form onSubmit={submit} className="form">
-          <label>
-            Tên đăng nhập
-            <input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" required maxLength={64} />
-          </label>
-          <label>
-            Mật khẩu
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
-          </label>
-          <button type="submit" disabled={busy || !username || !password}>
-            {busy ? "Đang đăng nhập…" : "Đăng nhập"}
-          </button>
-        </form>
-      </Card>
-    </main>
+    <div className="login-wrap">
+      <main className="login">
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true">
+            <Activity size={20} strokeWidth={2.5} />
+          </span>
+          RetailVision
+        </div>
+        <Card title="Đăng nhập RetailVision">
+          {error && <Banner kind="error">{error}</Banner>}
+          <form onSubmit={submit} className="form">
+            <label>
+              Tên đăng nhập
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                required
+                maxLength={64}
+              />
+            </label>
+            <label>
+              Mật khẩu
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </label>
+            <button type="submit" disabled={busy || !username || !password}>
+              {busy ? "Đang đăng nhập…" : "Đăng nhập"}
+            </button>
+          </form>
+        </Card>
+      </main>
+    </div>
   );
 }

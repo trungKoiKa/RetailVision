@@ -1,9 +1,14 @@
+import { lazy, Suspense } from "react";
+import { Cpu, LogIn, LogOut, Users } from "lucide-react";
 import { Banner } from "../../shared/components/Banner";
 import { Card } from "../../shared/components/Card";
+import { KpiCard } from "../../shared/components/KpiCard";
 import { StatusBadge } from "../../shared/components/StatusBadge";
-import type { AlertView, DeviceView, Live, Overview } from "../../shared/types/api";
+import type { AlertView, DeviceView, Live } from "../../shared/types/api";
 import { formatAge, formatCount, formatDateTime, formatTime } from "../../shared/utils/format";
 import { useOverview } from "./useOverview";
+
+const TodayChart = lazy(() => import("./TodayChart"));
 
 const END_REASONS: Record<string, string> = {
   NORMALIZED: "đã hết đông",
@@ -29,10 +34,15 @@ export function OverviewPage() {
   const data = query.data;
   const backendDown = query.isError;
   const live = backendDown || !data ? UNKNOWN_LIVE : data.live;
+  const today = backendDown ? null : (data?.today ?? null);
+  const devices = backendDown ? [] : (data?.devices ?? []);
+  const online = devices.filter((d) => d.status === "ONLINE").length;
 
   return (
     <div className="page">
-      {backendDown && <Banner kind="error">Không kết nối được backend. Số liệu bên dưới không phải dữ liệu hiện tại.</Banner>}
+      {backendDown && (
+        <Banner kind="error">Không kết nối được backend. Số liệu bên dưới không phải dữ liệu hiện tại.</Banner>
+      )}
       {!backendDown && data && live.stale && (
         <Banner kind="warn">
           Không có dữ liệu tin cậy từ camera
@@ -41,66 +51,68 @@ export function OverviewPage() {
       )}
       {query.isPending && <p className="muted">Đang tải…</p>}
 
-      <div className="grid">
-        <LiveCard live={live} profile={data?.profile ?? null} />
-        <TodayCard today={backendDown ? null : (data?.today ?? null)} />
-        <AlertCard alert={backendDown ? null : (data?.last_alert ?? null)} unknown={backendDown || !data} />
-        <DevicesCard devices={backendDown ? [] : (data?.devices ?? [])} />
+      <div className="kpi-row">
+        <KpiCard
+          className={`kpi-live live-${live.state.toLowerCase()}`}
+          icon={Users}
+          tone={live.state === "OVERLOAD" ? "red" : live.state === "NORMAL" ? "green" : "amber"}
+          label="Người trong vùng chờ"
+          value={formatCount(live.queue_count)}
+          valueTestId="queue-count"
+          extra={<StatusBadge state={live.state} />}
+          hint={
+            <>
+              <span data-testid="data-age">Tuổi dữ liệu: {formatAge(live.age_seconds)}</span>
+              {data?.profile && <span className="chip">Profile: {data.profile}</span>}
+            </>
+          }
+        />
+        <KpiCard
+          icon={LogIn}
+          tone="green"
+          label="Lượt vào hôm nay"
+          value={today ? today.in : "—"}
+          valueTestId={today ? "today-in" : undefined}
+          hint={today ? `Ngày ${today.date} (giờ Việt Nam)` : undefined}
+        />
+        <KpiCard
+          icon={LogOut}
+          tone="blue"
+          label="Lượt ra hôm nay"
+          value={today ? today.out : "—"}
+          valueTestId={today ? "today-out" : undefined}
+          hint={today ? `Chênh lệch vào − ra: ${today.in - today.out}` : undefined}
+        />
+        <KpiCard
+          icon={Cpu}
+          tone="violet"
+          label="Thiết bị trực tuyến"
+          value={backendDown || !data ? "—" : `${online}/${devices.length}`}
+          hint="edge01 (Pi) và node01 (ESP32)"
+        />
       </div>
-    </div>
-  );
-}
 
-function LiveCard({ live, profile }: { live: Live; profile: Overview["profile"] }) {
-  return (
-    <Card title="Vùng chờ" className={`card-live live-${live.state.toLowerCase()}`}>
-      <div className="live-head">
-        <StatusBadge state={live.state} />
-        {profile && <span className="chip">Profile: {profile}</span>}
-      </div>
-      <div className="big-number" data-testid="queue-count" aria-label="Số người trong vùng chờ">
-        {formatCount(live.queue_count)}
-      </div>
-      <div className="muted">người trong vùng chờ</div>
       {live.state === "OVERLOAD" && (
-        <p className="note" data-testid="ack-note">
+        <div className={`alert-strip ${live.acked ? "acked" : ""}`} data-testid="ack-note">
           {live.acked
             ? "Nhân viên đã xác nhận (ACK). Vùng chờ vẫn đông, cảnh báo chưa kết thúc."
             : "Chưa có nhân viên xác nhận (ACK)."}
-        </p>
+        </div>
       )}
-      <div className="muted" data-testid="data-age">
-        Tuổi dữ liệu: {formatAge(live.age_seconds)}
-      </div>
-    </Card>
-  );
-}
 
-function TodayCard({ today }: { today: Overview["today"] | null }) {
-  return (
-    <Card title="Hôm nay">
-      {today ? (
-        <>
-          <div className="pair">
-            <div>
-              <div className="big-number" data-testid="today-in">
-                {today.in}
-              </div>
-              <div className="muted">Lượt vào</div>
-            </div>
-            <div>
-              <div className="big-number" data-testid="today-out">
-                {today.out}
-              </div>
-              <div className="muted">Lượt ra</div>
-            </div>
-          </div>
-          <div className="muted">Ngày {today.date} (giờ Việt Nam)</div>
-        </>
-      ) : (
-        <div className="big-number">—</div>
-      )}
-    </Card>
+      <div className="split">
+        <Card title="Lượt vào/ra hôm nay theo giờ">
+          <Suspense fallback={<p className="muted">Đang tải biểu đồ…</p>}>
+            {backendDown ? <p className="muted">—</p> : <TodayChart />}
+          </Suspense>
+          <p className="muted">Khung xám là thiếu dữ liệu (không có cột, không phải 0).</p>
+        </Card>
+        <div className="stack">
+          <AlertCard alert={backendDown ? null : (data?.last_alert ?? null)} unknown={backendDown || !data} />
+          <DevicesCard devices={devices} />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -116,9 +128,17 @@ function AlertCard({ alert, unknown }: { alert: AlertView | null; unknown: boole
           <dt>Mở lúc</dt>
           <dd>{formatDateTime(alert.opened_at)}</dd>
           <dt>Trạng thái</dt>
-          <dd>{alert.open ? "Đang mở" : `Đã kết thúc ${formatTime(alert.ended_at)} (${END_REASONS[alert.end_reason ?? ""] ?? "?"})`}</dd>
+          <dd>
+            {alert.open
+              ? "Đang mở"
+              : `Đã kết thúc ${formatTime(alert.ended_at)} (${END_REASONS[alert.end_reason ?? ""] ?? "?"})`}
+          </dd>
           <dt>Xác nhận</dt>
-          <dd>{alert.acked_at ? `${formatTime(alert.acked_at)} (sau ${formatAge(alert.ack_latency_seconds)})` : "Chưa có ACK"}</dd>
+          <dd>
+            {alert.acked_at
+              ? `${formatTime(alert.acked_at)} (sau ${formatAge(alert.ack_latency_seconds)})`
+              : "Chưa có ACK"}
+          </dd>
         </dl>
       )}
     </Card>
