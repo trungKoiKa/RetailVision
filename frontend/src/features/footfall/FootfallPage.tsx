@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { Gauge, LogIn, LogOut } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Legend, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { apiFetch } from "../../shared/api/client";
 import { Banner } from "../../shared/components/Banner";
 import { Card } from "../../shared/components/Card";
+import { KpiCard } from "../../shared/components/KpiCard";
 import type { FootfallResponse, Granularity } from "../../shared/types/api";
 import { formatCount } from "../../shared/utils/format";
 import { bucketKind, formatCoverage, rangeLabel, rangeProblem, todayVn, toChartRows } from "./footfall";
@@ -28,7 +30,7 @@ export function FootfallPage() {
 
   return (
     <div className="page">
-      <Card title="Lượt vào/ra">
+      <Card title="Bộ lọc báo cáo">
         <div className="filters">
           <label>
             Từ ngày
@@ -70,39 +72,29 @@ function Report({ data }: { data: FootfallResponse }) {
   const gaps = data.totals.gap_buckets;
   return (
     <>
-      <Card title="Tổng trong khoảng">
-        <div className="pair">
-          <div>
-            <div className="big-number" data-testid="total-in">
-              {data.totals.in}
-            </div>
-            <div className="muted">Lượt vào</div>
-          </div>
-          <div>
-            <div className="big-number" data-testid="total-out">
-              {data.totals.out}
-            </div>
-            <div className="muted">Lượt ra</div>
-          </div>
-          <div>
-            <div className="big-number" data-testid="total-coverage">
-              {formatCoverage(data.totals.coverage)}
-            </div>
-            <div className="muted">Độ phủ quan sát</div>
-          </div>
+      <div className="kpi-row three">
+        <KpiCard icon={LogIn} tone="green" label="Lượt vào" value={data.totals.in} valueTestId="total-in" />
+        <KpiCard icon={LogOut} tone="blue" label="Lượt ra" value={data.totals.out} valueTestId="total-out" />
+        <KpiCard
+          icon={Gauge}
+          tone="violet"
+          label="Độ phủ quan sát"
+          value={formatCoverage(data.totals.coverage)}
+          valueTestId="total-coverage"
+          hint="Tỉ lệ thời gian camera có dữ liệu hợp lệ"
+        />
+      </div>
+      {gaps > 0 && (
+        <div className="alert-strip acked" data-testid="gap-note">
+          {gaps} khung thiếu dữ liệu: tổng chỉ cộng các khung có số liệu, không coi khung thiếu là 0.
         </div>
-        {gaps > 0 && (
-          <p className="note" data-testid="gap-note">
-            {gaps} khung thiếu dữ liệu: tổng chỉ cộng các khung có số liệu, không coi khung thiếu là 0.
-          </p>
-        )}
-      </Card>
+      )}
 
       <Card title="Biểu đồ">
         <div className="chart" aria-label="Biểu đồ lượt vào/ra">
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={rows}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid vertical={false} />
               <XAxis dataKey="label" />
               <YAxis allowDecimals={false} />
               <Tooltip />
@@ -110,8 +102,8 @@ function Report({ data }: { data: FootfallResponse }) {
               {rows.filter((r) => r.kind === "gap").map((r) => (
                 <ReferenceArea key={r.label} x1={r.label} x2={r.label} fill="var(--chart-gap)" fillOpacity={0.25} ifOverflow="visible" />
               ))}
-              <Bar dataKey="in" name="Vào" fill="var(--chart-in)" />
-              <Bar dataKey="out" name="Ra" fill="var(--chart-out)" />
+              <Bar dataKey="in" name="Vào" fill="var(--chart-in)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="out" name="Ra" fill="var(--chart-out)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
