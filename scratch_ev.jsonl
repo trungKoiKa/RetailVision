@@ -1,0 +1,7 @@
+{"type": "queue", "ts": 0.0, "count": 0}
+{"type": "queue", "ts": 1.001, "count": 0}
+{"type": "queue", "ts": 2.002, "count": 1}
+{"type": "queue", "ts": 3.003, "count": 1}
+{"type": "queue", "ts": 4.004, "count": 1}
+{"type": "queue", "ts": 5.005, "count": 1}
+{"type": "queue", "ts": 6.006, "count": 0}

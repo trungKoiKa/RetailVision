@@ -49,6 +49,12 @@ bool AlertModel::onStatePayload(const char* json, size_t len, uint32_t nowMs) {
     id[kUuidLen] = '\0';
   }
 
+  // "mới" nếu đổi trạng thái, đổi cảnh báo, hoặc state trước đó đã quá timeout (tức đã UNKNOWN)
+  const bool wasLive = state(nowMs) != State::Unknown;
+  const bool sameState = wasLive && state_ == next && strcmp(alertId_, id) == 0;
+  if (!sameState) sinceMs_ = nowMs;
+  hasCount_ = doc["queue_count"].is<int>() && doc["queue_count"].as<int>() >= 0 && doc["queue_count"].as<int>() <= 1000;
+  count_ = hasCount_ ? static_cast<uint16_t>(doc["queue_count"].as<int>()) : 0;
   state_ = next;
   acked_ = (next == State::Overload) && doc["acked"].as<bool>();
   memcpy(alertId_, id, sizeof(alertId_));
@@ -69,6 +75,17 @@ bool AlertModel::acked(uint32_t nowMs) const { return state(nowMs) == State::Ove
 
 const char* AlertModel::alertId(uint32_t nowMs) const {
   return state(nowMs) == State::Overload ? alertId_ : "";
+}
+
+bool AlertModel::queueCount(uint32_t nowMs, uint16_t& out) const {
+  if (state(nowMs) == State::Unknown || !hasCount_) return false;
+  out = count_;
+  return true;
+}
+
+uint32_t AlertModel::stateAgeMs(uint32_t nowMs) const {
+  if (state(nowMs) == State::Unknown) return 0;
+  return static_cast<uint32_t>(nowMs - sinceMs_);
 }
 
 bool AlertModel::lastSeq(uint32_t& out) const {

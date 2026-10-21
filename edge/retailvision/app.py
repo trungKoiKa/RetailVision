@@ -48,6 +48,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--events-out", type=Path, help="ghi sự kiện JSONL (mặc định: stdout)")
     parser.add_argument("--video-out", type=Path, help="ghi video đã vẽ vạch, vùng chờ, ID người (chỉ khi xử lý file)")
     parser.add_argument("--show", action="store_true", help="mở cửa sổ xem trực tiếp; nhấn q để dừng")
+    parser.add_argument("--preview-port", type=int, help="bật xem trước MJPEG trên cổng này (mặc định tắt); chỉ mã hoá khi có người xem")
+    parser.add_argument("--preview-host", default="127.0.0.1", help="địa chỉ nghe của xem trước (mặc định chỉ máy này; 0.0.0.0 để xem trong LAN)")
     parser.add_argument("--latency-out", type=Path, help="ghi độ trễ từng khung (ms) khi chạy camera, và in p50/p95/max")
     parser.add_argument("--no-mqtt", action="store_true", help="không gửi MQTT dù cấu hình có mục mqtt")
     parser.add_argument("--check-config", action="store_true", help="chỉ kiểm tra cấu hình rồi thoát")
@@ -135,6 +137,14 @@ def run(args: argparse.Namespace) -> int:
     out = open_events_file(args.events_out)
     sink = _CountingSink(JsonlSink(out), counts)
     processed = 0
+    preview = None
+    preview_observer = None
+    if args.preview_port is not None:
+        from retailvision.presentation.preview import PreviewServer
+
+        preview = PreviewServer(args.preview_host, args.preview_port).start()
+        preview_observer = _preview_observer(preview)
+        print(f"Xem trước: http://{args.preview_host}:{preview.port}/ (tắt bằng cách bỏ --preview-port)", file=sys.stderr)
     try:
         if args.source is not None or config.source.type == "video":
             path = args.source or config.source.path
@@ -168,14 +178,24 @@ def run(args: argparse.Namespace) -> int:
                     if cv2.waitKey(1) & 0xFF == ord("q"):
                         raise KeyboardInterrupt
 
-            observer_needed = writer is not None or args.show
+            file_observer = observer if (writer is not None or args.show) else None
+            if preview_observer is not None:
+                def observer_all(frame, tracks, pl, _a=file_observer, _b=preview_observer):
+                    if _a:
+                        _a(frame, tracks, pl)
+                    _b(frame, tracks, pl)
+
+                active = observer_all
+            else:
+                active = file_observer
+            observer_needed = active is not None
             try:
                 run_pipeline(
                     pipeline,
                     source.read,
                     detector,
                     sink,
-                    observer=observer if observer_needed else None,
+                    observer=active,
                     messenger=messenger,
                     settings=settings,
                 )
@@ -187,10 +207,12 @@ def run(args: argparse.Namespace) -> int:
                     cv2.destroyAllWindows()
             source.close()
         else:
-            processed = _run_camera(config, detector, sink, messenger, settings, args.latency_out)
+            processed = _run_camera(config, detector, sink, messenger, settings, args.latency_out, preview_observer)
     except KeyboardInterrupt:
         print("Dừng theo yêu cầu.", file=sys.stderr)
     finally:
+        if preview is not None:
+            preview.close()
         if messenger is not None:
             messenger.close()
         if args.events_out is not None:
@@ -199,13 +221,23 @@ def run(args: argparse.Namespace) -> int:
     return 0
 
 
-def _run_camera(config, detector, sink: _CountingSink, messenger: Optional[EdgeMessenger], settings, latency_out: Optional[Path] = None) -> int:
+def _preview_observer(server):
+    def observer(frame, tracks, pl):
+        if not server.has_viewers:
+            return
+        status = f"IN={pl.in_count}  OUT={pl.out_count}  queue={pl.last_queue_count}  state={pl.alert.state.value}"
+        server.publish(draw(frame.image, tracks, pl.line_px, pl.polygon_px, status))
+
+    return observer
+
+
+def _run_camera(config, detector, sink: _CountingSink, messenger: Optional[EdgeMessenger], settings, latency_out: Optional[Path] = None, observer=None) -> int:
     """Chạy camera thật cho đến khi nhấn Ctrl+C. Camera mất/chưa cắm thì vào UNKNOWN và tự phục hồi."""
     source = CameraSource(config.source.index, config.source.width, config.source.height)
     try:
         ages: Optional[list] = [] if latency_out is not None else None
         try:
-            return run_camera_loop(config, source.read, detector, sink, messenger, settings, latency_ms=ages)
+            return run_camera_loop(config, source.read, detector, sink, messenger, settings, latency_ms=ages, observer=observer)
         finally:
             if latency_out is not None and ages:
                 _write_latency(latency_out, ages)

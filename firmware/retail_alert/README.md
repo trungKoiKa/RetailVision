@@ -11,6 +11,7 @@ Firmware nhận `state` của Pi qua MQTT, bật LED/còi theo [docs/2-design.md
 | LED đỏ / xanh / vàng | 25 / 26 / 27 | GPIO → 330 Ω → LED (anode) → GND |
 | Còi | 14 | GPIO → 1 kΩ → base NPN (S8050/2N2222); còi giữa 5 V và collector; emitter → GND |
 | Nút ACK | 33 | `INPUT_PULLUP`, một chân nút nối GND |
+| OLED SSD1306 128×64 (tùy chọn) | SDA 21 / SCL 22 | I2C 3,3 V, địa chỉ 0x3C. Không cắm thì firmware báo "OLED: không thấy" và chạy bình thường |
 
 Tránh GPIO 0/2/12/15 (strapping) và 34–39 (chỉ vào). Mức HIGH = LED sáng / còi kêu.
 
@@ -55,6 +56,10 @@ pio device monitor      # xem log, 115200
 ```
 
 Trên Windows, `g++` của MSYS2 (thư mục `ucrt64\bin`) chạy được từ PowerShell; trong shell kiểu Bash nó báo lỗi im lặng, nên chạy `pio test -e native` từ PowerShell.
+
+## Màn hình OLED (P1)
+
+Hiện trạng thái (BINH THUONG / DONG KHACH / DONG - DA ACK / KHONG CO DU LIEU), số người chờ và thời lượng cảnh báo. Không có số người thì hiện `--`, không bao giờ hiện 0 thay cho thiếu dữ liệu; thời lượng tính theo đồng hồ ESP32 từ lúc thấy cảnh báo. Chữ không dấu vì font mặc định không có tiếng Việt. Logic chữ nằm ở `lib/alert_core/src/display.*` và có test; phần vẽ lên màn hình **chưa thử trên mạch thật**.
 
 ## Giới hạn đã biết
 

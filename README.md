@@ -52,7 +52,7 @@ Chạy từng thành phần để phát triển: [edge/](edge/README.md), [backe
 
 - Chưa đo trên Raspberry Pi 4 thật: FPS, độ chính xác đếm, độ trễ cảnh báo và các bài test phục hồi với camera/ESP32 thật vẫn là việc phải làm; không có con số nào được suy từ laptop.
 - Chưa có tập clip và nhãn chính thức; `evaluation/` chỉ cung cấp công cụ.
-- Chưa làm: màn hình OLED, xem trước MJPEG (đều P1). Web chạy HTTP trong LAN, chưa có HTTPS.
+- Màn hình OLED và xem trước MJPEG (P1) đã viết và test trên máy, chưa thử trên mạch/Pi thật. Web chạy HTTP trong LAN, chưa có HTTPS.
 - Chỉ một cửa, một camera, một vùng chờ; không nhận diện danh tính, không lưu hay truyền video khi vận hành.
 
 ## Dữ liệu nghiên cứu

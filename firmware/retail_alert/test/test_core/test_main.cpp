@@ -6,6 +6,7 @@
 #include "ack_sender.h"
 #include "alert_model.h"
 #include "debounce.h"
+#include "display.h"
 #include "outputs.h"
 #include "payloads.h"
 
@@ -150,6 +151,63 @@ static void assertOutputs(State s, bool acked, LedMode red, LedMode green, LedMo
   TEST_ASSERT_EQUAL(green, o.green);
   TEST_ASSERT_EQUAL(yellow, o.yellow);
   TEST_ASSERT_EQUAL(buzzer, o.buzzer);
+}
+
+void test_model_exposes_queue_count_only_when_known() {
+  AlertModel m(TIMEOUT);
+  uint16_t n = 99;
+  TEST_ASSERT_FALSE(m.queueCount(0, n));
+  TEST_ASSERT_TRUE(feed(m, overloadJson(false, ALERT), 100));  // payload mẫu có queue_count = 5
+  TEST_ASSERT_TRUE(m.queueCount(200, n));
+  TEST_ASSERT_EQUAL_UINT16(5, n);
+  TEST_ASSERT_FALSE(m.queueCount(100 + TIMEOUT + 1, n));  // quá timeout: không biết, không phải 0
+  const char* nullCount =
+      "{\"schema_version\":1,\"state\":\"NORMAL\",\"queue_count\":null,\"alert_id\":null,\"acked\":false,\"seq\":9}";
+  TEST_ASSERT_TRUE(feed(m, nullCount, 300));
+  TEST_ASSERT_FALSE(m.queueCount(310, n));
+}
+
+void test_model_state_age_restarts_on_change_and_after_timeout() {
+  AlertModel m(TIMEOUT);
+  TEST_ASSERT_EQUAL_UINT32(0, m.stateAgeMs(500));
+  TEST_ASSERT_TRUE(feed(m, overloadJson(false, ALERT), 1000));
+  TEST_ASSERT_TRUE(feed(m, overloadJson(true, ALERT), 3000));  // cùng cảnh báo, chỉ đổi acked: đồng hồ không chạy lại
+  TEST_ASSERT_EQUAL_UINT32(3000, m.stateAgeMs(4000));
+  TEST_ASSERT_TRUE(feed(m, overloadJson(false, OTHER_ALERT), 5000));  // cảnh báo mới
+  TEST_ASSERT_EQUAL_UINT32(1000, m.stateAgeMs(6000));
+  TEST_ASSERT_TRUE(feed(m, overloadJson(false, OTHER_ALERT), 20000));  // mất tin giữa chừng rồi trở lại: tính lại
+  TEST_ASSERT_EQUAL_UINT32(0, m.stateAgeMs(20000));
+}
+
+void test_display_text_never_shows_zero_for_missing_data() {
+  DisplayText t;
+  formatDisplay(State::Unknown, false, false, 0, 0, t);
+  TEST_ASSERT_EQUAL_STRING("KHONG CO DU LIEU", t.title);
+  TEST_ASSERT_EQUAL_STRING("Nguoi cho: --", t.people);
+  formatDisplay(State::Unknown, false, true, 0, 0, t);  // dù dữ liệu cũ có số, UNKNOWN vẫn là "--"
+  TEST_ASSERT_EQUAL_STRING("Nguoi cho: --", t.people);
+  formatDisplay(State::Normal, false, false, 0, 0, t);
+  TEST_ASSERT_EQUAL_STRING("Nguoi cho: --", t.people);
+  formatDisplay(State::Normal, false, true, 0, 0, t);  // 0 người thật sự được hiện là 0
+  TEST_ASSERT_EQUAL_STRING("Nguoi cho: 0", t.people);
+  TEST_ASSERT_EQUAL_STRING("BINH THUONG", t.title);
+}
+
+void test_display_overload_shows_duration_and_ack() {
+  DisplayText t;
+  formatDisplay(State::Overload, false, true, 5, 83000, t);
+  TEST_ASSERT_EQUAL_STRING("DONG KHACH", t.title);
+  TEST_ASSERT_EQUAL_STRING("Nguoi cho: 5", t.people);
+  TEST_ASSERT_EQUAL_STRING("Keo dai 01:23", t.detail);
+  DisplayText u;
+  formatDisplay(State::Overload, true, true, 5, 83000, u);
+  TEST_ASSERT_EQUAL_STRING("DONG - DA ACK", u.title);  // ACK không đổi thành bình thường
+  TEST_ASSERT_FALSE(t == u);
+  formatDisplay(State::Overload, false, true, 5, 83000, u);
+  TEST_ASSERT_TRUE(t == u);
+  formatDisplay(State::Overload, false, true, 1000, 99 * 60000UL + 59000, t);  // không tràn dòng
+  TEST_ASSERT_LESS_THAN(kDisplayLineLen, strlen(t.people));
+  TEST_ASSERT_EQUAL_STRING("Keo dai 99:59", t.detail);
 }
 
 void test_outputs_follow_the_design_table() {
@@ -374,6 +432,10 @@ int main(int, char**) {
   RUN_TEST(test_model_valid_unknown_payload_is_unknown);
   RUN_TEST(test_model_remembers_the_state_seq_for_latency_echo);
   RUN_TEST(test_model_timeout_survives_millis_wraparound);
+  RUN_TEST(test_model_exposes_queue_count_only_when_known);
+  RUN_TEST(test_model_state_age_restarts_on_change_and_after_timeout);
+  RUN_TEST(test_display_text_never_shows_zero_for_missing_data);
+  RUN_TEST(test_display_overload_shows_duration_and_ack);
   RUN_TEST(test_outputs_follow_the_design_table);
   RUN_TEST(test_led_and_buzzer_levels);
   RUN_TEST(test_debounce_ignores_bounce_and_fires_once_per_press);
