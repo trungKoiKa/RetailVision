@@ -224,6 +224,7 @@ def run_camera_loop(
     clock: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
     should_stop: Callable[[], bool] = lambda: False,
+    observer: Optional[Callable[[Frame, list[Track], Pipeline], None]] = None,
 ) -> int:
     """Vòng chạy camera trực tiếp. Trả về số khung đã xử lý khi `should_stop()` (mặc định: không bao giờ).
 
@@ -263,8 +264,10 @@ def run_camera_loop(
                     latency_ms.append(value)
                 return value
 
-            process_frame(pipeline, detector, sink, messenger, frame, frame_age_ms=age, settings=settings)
+            tracks = process_frame(pipeline, detector, sink, messenger, frame, frame_age_ms=age, settings=settings)
             processed += 1
+            if observer:
+                observer(frame, tracks, pipeline)
         else:
             if not is_stale and now - last_frame_at > stale_s:
                 is_stale = True

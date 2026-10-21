@@ -36,6 +36,8 @@ cd edge
 - `--video-out`: video có vạch (vàng), vùng chờ (xanh dương), khung người và ID tracking (xanh lá), cùng dòng trạng thái ở góc trên.
 - `--events-out`: sự kiện JSONL (lượt IN/OUT, số người vùng chờ mỗi giây, cảnh báo).
 
+- `--preview-port N`: xem trước MJPEG (`http://127.0.0.1:N/`, ảnh tĩnh ở `/snapshot.jpg`) khi chạy file hoặc camera; mặc định tắt, không có cổng nào mở. Chỉ nghe máy này; xem từ máy khác trong LAN cần `--preview-host 0.0.0.0` (ai trong LAN cũng thấy hình). Chỉ mã hoá JPEG khi có người xem, ảnh không ghi đĩa. Dùng để hiệu chuẩn/demo, không bật khi vận hành.
+
 Tọa độ vạch và vùng trong file cấu hình là 0–1 theo khung hình. Phải chỉnh lại theo đúng video trước khi đọc số đếm.
 
 ## Kiểm thử

@@ -12,6 +12,11 @@ constexpr uint8_t PIN_LED_YELLOW = 27;
 constexpr uint8_t PIN_BUZZER = 14;
 // Nút ACK: INPUT_PULLUP, nút nối GND (nhấn = LOW)
 constexpr uint8_t PIN_BUTTON = 33;
+// OLED SSD1306 128x64 I2C (P1, không bắt buộc): SDA/SCL mặc định của ESP32. Không có màn hình thì firmware vẫn chạy bình thường.
+constexpr uint8_t PIN_OLED_SDA = 21;
+constexpr uint8_t PIN_OLED_SCL = 22;
+constexpr uint8_t OLED_I2C_ADDR = 0x3C;
+constexpr uint32_t OLED_REFRESH_MS = 250;  // chỉ vẽ lại khi chữ đổi; kiểm tra mỗi chu kỳ này
 
 // --- Định danh (khớp contracts/mqtt) ---
 #define SITE_ID "site01"

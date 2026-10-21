@@ -40,7 +40,7 @@ Tài liệu trả lời: làm gì trước, đang ở đâu. Mỗi phần chỉ 
 - [x] Loader YAML + validation.
 - [x] Capture camera/file video, frame mới nhất, timestamp video khi replay, reconnect.
 - [x] Detector/tracker/runner, tọa độ về frame gốc.
-- [ ] `tools/calibrate.py`; preview MJPEG có công tắc.
+- [x] `tools/calibrate.py`; preview MJPEG có công tắc. *(`--preview-port`, đã thử trên clip thật; chưa thử trên Pi)*
 - [ ] Log FPS và tuổi frame; cùng clip chạy hai lần cùng kết quả.
 
 **Gate:** đếm cửa và vùng chờ đúng trên video quay sẵn.
@@ -100,11 +100,11 @@ Tài liệu trả lời: làm gì trước, đang ở đâu. Mỗi phần chỉ 
 - [x] V004, đăng nhập session, CSRF, ADMIN/MANAGER kiểm ở API.
 - [x] Báo cáo giờ/ngày, coverage, gap; alerts phân trang; CSV (T21). *(backend; trang web Footfall/Alerts/Devices ở lát 10c)*
 - [x] (P1) Settings: V005, PENDING/APPLIED/REJECTED, revision cũ không ghi đè. *(backend + edge; trang web ở lát 10c)*
-- [ ] (P1) OLED.
+- [x] (P1) OLED. *(logic chữ có test; build được; chưa thử trên màn hình thật)*
 
 **Gate:** báo cáo không biến thiếu dữ liệu thành 0; gọi thẳng API sai quyền bị chặn.
 
-*Trạng thái:* đạt ở mức tự động và trên Chrome với hệ thống thật (backend + PostgreSQL + Mosquitto + edge Python thật); chưa có dữ liệu từ Pi/camera thật. OLED (P1) chưa làm.
+*Trạng thái:* đạt ở mức tự động và trên Chrome với hệ thống thật (backend + PostgreSQL + Mosquitto + edge Python thật); chưa có dữ liệu từ Pi/camera thật. OLED (P1) làm ở bước 13 (chưa thử trên màn hình thật).
 
 ## Phần 11 — Đánh giá (~12 giờ)
 
@@ -143,3 +143,4 @@ Cắt theo thứ tự: settings web → CSV → vai trò MANAGER → NCNN 416 �
 | 2026-10-21 | 10c | Trang web: Đăng nhập, Lượt vào/ra (biểu đồ, bảng, gap xám, CSV), Cảnh báo, Thiết bị + đổi ngưỡng, Tài khoản; 59 test vitest; kiểm trên Chrome với hệ thống thật: đăng nhập, báo cáo có 6 khung xám và không có cột 0, đổi ngưỡng được edge thật áp dụng (revision 1). Test phát hiện và sửa một lỗi thật: `queryClient.clear()` làm giao diện không cập nhật sau đăng nhập/đăng xuất | OLED (P1) chưa làm; chưa có Pi thật | Phần 11 |
 | 2026-10-21 | 11 | Công cụ đánh giá: `metrics.py` (sai số đếm từng hướng, MAE vùng chờ, precision/recall cảnh báo ±3 s bằng chính máy trạng thái của edge, khoảng tin cậy Wilson, p50/p95), `evaluate.py` (manifest dev/test → báo cáo, cảnh báo cỡ mẫu nhỏ, không kết luận khi thiếu dữ liệu), `label_queue.py`, `record.py` (video đúng thời gian thực), `calibrate.py` (vạch/vùng → YAML, mũi tên chiều vào), đo độ trễ (`--latency-out`, firmware echo + `latency_echo.py`); edge 210 test, firmware 26 test và build `esp32dev_debug`; chạy thử `evaluate.py` trên kết quả thật của clip VIRAT (3 lượt IN, ghi rõ mẫu nhỏ) | Chưa có clip và nhãn chính thức, chưa có số đo trên Pi; nhãn VIRAT do AI ước lượng | Phần 12 |
 | 2026-10-21 | 12 | Đóng gói: Dockerfile backend/web, nginx cùng origin, `deploy/server/compose.yaml` + `compose.demo.yaml` (broker và edge giả), `backup`/`restore` sh và ps1 (kiểm `pg_restore --list`, khôi phục vào CSDL riêng), CI GitHub Actions, README gốc; đã dựng và đăng nhập qua nginx, thấy dữ liệu edge giả, sao lưu và khôi phục 5 migration | Chưa thử trên Linux/clone sạch ở máy khác; chưa có video demo; chưa có HTTPS | Hoàn thiện bằng phần cứng thật |
+| 2026-10-21 | 13 | Hai mục P1: xem trước MJPEG (`--preview-port`, mặc định tắt, nghe 127.0.0.1, chỉ mã hoá khi có người xem; 7 test, thử với clip thật) và OLED SSD1306 (số người `--` khi không biết, thời lượng cảnh báo, 4 test mới; build esp32dev và esp32dev_debug); edge 217 test, firmware 30 test | Chưa thử trên Pi, mạch OLED thật | Hoàn thiện bằng phần cứng thật |

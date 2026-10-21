@@ -26,6 +26,10 @@ class AlertModel {
   const char* alertId(uint32_t nowMs) const;
   // `seq` của state hợp lệ gần nhất (dùng cho bản tin echo đo độ trễ). false nếu chưa có.
   bool lastSeq(uint32_t& out) const;
+  // Số người ở vùng chờ theo state hợp lệ gần nhất. false khi UNKNOWN/quá timeout hoặc Pi gửi null: KHÔNG bao giờ trả 0 thay cho "không biết".
+  bool queueCount(uint32_t nowMs, uint16_t& out) const;
+  // Thời gian (ms, đồng hồ ESP32) kể từ khi ESP32 thấy trạng thái/cảnh báo hiện tại. 0 khi UNKNOWN.
+  uint32_t stateAgeMs(uint32_t nowMs) const;
 
  private:
   uint32_t timeoutMs_;
@@ -36,6 +40,9 @@ class AlertModel {
   State state_ = State::Unknown;
   bool acked_ = false;
   char alertId_[kUuidLen + 1] = "";
+  bool hasCount_ = false;
+  uint16_t count_ = 0;
+  uint32_t sinceMs_ = 0;
 };
 
 }  // namespace rv
